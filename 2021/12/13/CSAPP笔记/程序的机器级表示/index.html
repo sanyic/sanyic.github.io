@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<html lang="“zh-CN”" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>程序的机器级表示（一） - sanyicの博客</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="sanyic,"> 
+    <meta name="description" content="sanyic,程序的机器级表示（一）计算机使用多重形式的抽象来隐藏实现的细节，对于机器级编程，需要特别关注ISA和虚拟地址。
+
+ISA（Instruction Set Architecture）：指令集架构.定义,"> 
+    <meta name="author" content="sanyic"> 
+    <link rel="alternative" href="atom.xml" title="sanyicの博客" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.ico"> 
+    
+    
+<link rel="stylesheet" href="/css/diaspora.css">
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body class="loading">
+    <span id="config-title" style="display:none">sanyicの博客</span>
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="iconfont icon-home image-icon" href="javascript:;" data-url="https://sanyic.github.io"></a>
+    <div title="播放/暂停" class="iconfont icon-play"></div>
+    <h3 class="subtitle">程序的机器级表示（一）</h3>
+    <div class="social">
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="iconfont icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">程序的机器级表示（一）</h1>
+        <div class="stuff">
+            <span>十二月 13, 2021</span>
+            
+  <ul class="post-tags-list" itemprop="keywords"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/%E6%B1%87%E7%BC%96/" rel="tag">汇编</a></li></ul>
+
+
+        </div>
+        <div class="content markdown">
+            <h1 id="程序的机器级表示（一）"><a href="#程序的机器级表示（一）" class="headerlink" title="程序的机器级表示（一）"></a>程序的机器级表示（一）</h1><p>计算机使用多重形式的抽象来隐藏实现的细节，对于机器级编程，需要特别关注ISA和虚拟地址。</p>
+<ul>
+<li>ISA（Instruction Set Architecture）：指令集架构.定义处理器状态，指令的格式，以及每条指令的影响。ISA将程序的行为描述为好像每条指令都是依次执行。复杂的处理器硬件可以采取措施与每条指令的执行完全同步。</li>
+<li>虚拟地址：储存器系统的实现是多个硬件储存器和操作系统的组合，虚拟内存将其抽象为一个非常大的字节数组。</li>
+</ul>
+<h2 id="相关指令的使用"><a href="#相关指令的使用" class="headerlink" title="相关指令的使用"></a>相关指令的使用</h2><p>预先写好两个程序</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//main.c</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">multstore</span> <span class="params">(<span class="keyword">long</span>,<span class="keyword">long</span>,<span class="keyword">long</span> *)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> d;</span><br><span class="line">    multstore(<span class="number">2</span>,<span class="number">3</span>,&amp;d);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;2 * 3 --&gt; %ld\n&quot;</span>,d);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">long</span> <span class="title">mult2</span><span class="params">(<span class="keyword">long</span> a,<span class="keyword">long</span> b)</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> s= a * b;</span><br><span class="line">    <span class="keyword">return</span> s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//multstroe.c</span></span><br><span class="line"><span class="function"><span class="keyword">long</span> <span class="title">mult2</span><span class="params">(<span class="keyword">long</span>,<span class="keyword">long</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">multstore</span> <span class="params">(<span class="keyword">long</span> x,<span class="keyword">long</span> y,<span class="keyword">long</span> *dest)</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> t = mult2(x,y);</span><br><span class="line">    *dest = t;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>两个程序分开都是不能独立运行的，我们可以用<code>linux&gt;gcc -og -o prog main.c multstore.c</code>来连接两个程序来构建一个可执行的文件</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204155734109.png" alt="image-20211204155734109" style="zoom:33%;">
+
+<p><code>objdump -d prog</code>可以反汇编查看ATT的汇编代码同时查看机器码</p>
+<p>可以看到链接器填上了callq 指令调用mult2需要使用的地址，同时出现了一些nop指令用来让代码变为16字节，更好的存放下一个代码块</p>
+<p><code>linux&gt;gcc -og -s main.c</code>进行反编译实现汇编代码文件main.s</p>
+<p><code>linux&gt;gcc  -og -o main.s</code>进行机器代码实现main.o，此文件需要objdump来查看</p>
+<h3 id="ATT和intel"><a href="#ATT和intel" class="headerlink" title="ATT和intel"></a>ATT和intel</h3><table>
+<thead>
+<tr>
+<th></th>
+<th>ATT</th>
+<th>INTEL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>指令大小后缀</td>
+<td>有，如callq</td>
+<td>无，只有call，push</td>
+</tr>
+<tr>
+<td>寄存器名称</td>
+<td>如%rsp</td>
+<td>如rsp</td>
+</tr>
+<tr>
+<td>内存位置表示</td>
+<td>（%rbx）</td>
+<td>QWOR PTR [rbx]</td>
+</tr>
+<tr>
+<td>多个操作数</td>
+<td>二者相反</td>
+<td>二者相反</td>
+</tr>
+<tr>
+<td>适用范围</td>
+<td>GCC OBJDUMP</td>
+<td>微软系列</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>在C中插入汇编代码</p>
+<p>GCC内联特性，用asm伪代码在C中包含简短的汇编</p>
+<p>将完整的函数放进独立的汇编文件，用汇编器和链接器相连</p>
+</blockquote>
+<h2 id="数据格式"><a href="#数据格式" class="headerlink" title="数据格式"></a>数据格式</h2><img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204162835466.png" alt="image-20211204162835466" style="zoom: 67%;">
+
+<p>​        x86系列实现过80位，10字节的long double浮点类型运算，不过移植性和实用性都很差</p>
+<p>​        gcc的汇编代码都有一个字符的后缀来表示操作数的大小，movb表示字节，movw传送字，movl传送双字，movq传送四字。l同时也表示8字节的 double却并不冲突，因为浮点数由一组不同的指令和寄存器操作</p>
+<h2 id="信息访问"><a href="#信息访问" class="headerlink" title="信息访问"></a>信息访问</h2><p>x86-64一共有16个寄存器，少数指令会使用某些特定的寄存器。此外有一组标准规范控制如何使用寄存器来管理栈，传参，返回，存储局部和临时数据。</p>
+<p><img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204171351192.png" alt="image-20211204171351192"></p>
+<p>对于生成小于8字节的指令，1,2字节会保持剩下的字节不变，生成4字节数字的指令会把高4位清0</p>
+<h3 id="操作数指示符"><a href="#操作数指示符" class="headerlink" title="操作数指示符"></a>操作数指示符</h3><p>大多数指令有一个或多个操作数，操作数可以分为三种形式立即数，寄存器和内存。书写有特殊的格式</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204174509586.png" alt="image-20211204174509586" style="zoom:67%;">
+
+<p>比较神奇的写法</p>
+<h3 id="数据传送指令"><a href="#数据传送指令" class="headerlink" title="数据传送指令"></a>数据传送指令</h3><p>最频繁使用的指令是数据传送指令，将数据从一个位置复制到另一个位置。最简单的数据传送指令是MOV类，它只将数据从源复制到目的位置，不做任何变化，</p>
+<h4 id="MOV类"><a href="#MOV类" class="headerlink" title="MOV类"></a>MOV类</h4><p>mov类由四条指令组成：movb，movw，movl，movq，这些指令仅仅是操作数大小上有不同。</p>
+<p>mov的源操作数是一个<strong>立即数</strong> ，储存在寄存器或者内存中，目的操作数指定一个位置，要么是寄存器，要么是内存。</p>
+<p>x86-64限制，源和目的操作数<strong>不能同时指向内存地址</strong>，两个内存交换需要多次mov。同时<strong>，不同宽度的寄存器之间直接传输是不允许的</strong>，唯一的例外是通用寄存器和段寄存器之间的传输</p>
+<p>mov只能表示32位补码作为源操作数，<strong>符号扩展</strong>得64位的值。movabsq能够以任意64位的立即数值作为源操作数，并只能以寄存器作为目的。</p>
+<h4 id="MOVZ类"><a href="#MOVZ类" class="headerlink" title="MOVZ类"></a>MOVZ类</h4><p>movz类相当于mov类的变式，movz类有movzbw,movzbl,movzwl,movzbq,movzwq,前一个大小指示符指源的大小，后一个指目的的大小。</p>
+<p>该类数据传输指令会将目的中剩余的字节进行零拓展</p>
+<h4 id="MOVS类"><a href="#MOVS类" class="headerlink" title="MOVS类"></a>MOVS类</h4><p>movs类和movz类相似，会对目的操作数剩余的位数进行符号拓展。另外movs类有一个cltq，固定将%eax符号拓展到%rax</p>
+<blockquote>
+<p>练习题的tip</p>
+<p>不同宽度的寄存器之间直接传输是不允许的，唯一的例外是通用寄存器和段寄存器之间的传输</p>
+<p>%sl不存在。。。</p>
+<p>%ebx不能作为地址</p>
+<p>%si是16位寄存器</p>
+<p>C中的“指针”就是地址，间接引用指针就是将指针放入寄存器，然后再内存引用中使用寄存器</p>
+<p>局部变量常常保存在寄存器中，访问速度远快于内存。</p>
+<p>int类型转移是需要特别注意，<strong>（movl）</strong>，其他类型要注意是否有符号。例如movzbl也会清零高四位</p>
+</blockquote>
+<h4 id="入栈和出栈"><a href="#入栈和出栈" class="headerlink" title="入栈和出栈"></a>入栈和出栈</h4><p>pushq和popq</p>
+<p>pushq：相当于</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">subq $8 , %rsp</span><br><span class="line">movq %rax , (%rsp)</span><br></pre></td></tr></table></figure>
+
+<p>popq：相当于</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">movq (%rsp) , %rax</span><br><span class="line">addq $8 , %rsp</span><br></pre></td></tr></table></figure>
+
+<h3 id="算术和逻辑运算"><a href="#算术和逻辑运算" class="headerlink" title="算术和逻辑运算"></a>算术和逻辑运算</h3><h4 id="有效地址加载-leaq类"><a href="#有效地址加载-leaq类" class="headerlink" title="有效地址加载 leaq类"></a>有效地址加载 leaq类</h4><p>实际上leaq是movq的变形，看似内存引用，实际上是将有效地址写入目的操作数。</p>
+<ul>
+<li>类似于C中的&amp;操作符，为后面的内存引用产生指针</li>
+<li>简单的算术操作</li>
+</ul>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204201413381.png" alt="image-20211204201413381" style="zoom:50%;">
+
+<h4 id="一元和二元操作"><a href="#一元和二元操作" class="headerlink" title="一元和二元操作"></a>一元和二元操作</h4><ul>
+<li>一元操作：decq，incq，negq。notq等类似于 i++</li>
+</ul>
+<img src="https://img2018.cnblogs.com/blog/1539443/201811/1539443-20181127212130893-665387977.png" alt="img" style="zoom: 67%;">
+
+<ul>
+<li>二元操作：其中第二个操作数既是源又是目的，不过，源操作数是第一个，目的操作数是第二个 <code>X-=Y</code></li>
+</ul>
+<p>因此第二个操作数不能是立即数，如果第二个操作数是内存地址的时候，处理器必须从内存读出值，操作，再写回内存地址</p>
+<h4 id="移位操作"><a href="#移位操作" class="headerlink" title="移位操作"></a>移位操作</h4><p>先给出移位量，再给出要移位的数。移位两可以是立即数，也可以是存放在单字节寄存器**%cl**中的数。</p>
+<p>对于x86-64来说，对于w位的操作数，移位数由%cl的m位来决定 ，满足2^m^ = w,[在%cl为FF时，salb移动7位，salw移动15位，sall移动31位]</p>
+<p>如图，左移有两个名字，SAL和SHL，二者并无差异，而SAR和SHR，分别为算术右移和逻辑右移。</p>
+<h4 id="八字运算"><a href="#八字运算" class="headerlink" title="八字运算"></a>八字运算</h4><table>
+<thead>
+<tr>
+<th>指令</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>clto：八字拓展</td>
+</tr>
+<tr>
+<td>mulq：无符号乘法</td>
+</tr>
+<tr>
+<td>imulq：有符号乘法</td>
+</tr>
+<tr>
+<td>divq：无符号除法</td>
+</tr>
+<tr>
+<td>idivq：有符号除法</td>
+</tr>
+</tbody></table>
+<p>imulq有两种形式，处理器可以通过操作数的个数来判断，对于只有一个操作数时，%rax作为另一个操作数</p>
+<p>idivq则是以%rdx和%rax作为128位的被除数，操作数作为除数，商存储在%rax，余数存储在%rdx</p>
+<p>此外，对于大多数64位的除法来说，被除数也常常是64位，此时%rdx应该是%rax的0拓展或者符号拓展，符号拓展可以用cqto来完成，不需要操作数。</p>
+<p>% rdx （高64位）和% rax（低64位）；一起表示128位八字的数据</p>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="">
+            </audio>
+            
+                <ul id="audio-list" style="display:none">
+                    
+                        
+                            <li title='0' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                        
+                            <li title='1' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                </ul>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+		data-enable='false'
+        data-ae='false'
+        data-ci='45f20068d0ff5ed5fccc'
+        data-cs='36072b1532a875a0fa8ef6960eec13035f4f7811'
+        data-r='sanyic.github.io'
+        data-o='sanyic'
+        data-a='sanyic'
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+        <div class='side'>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA%EF%BC%88%E4%B8%80%EF%BC%89"><span class="toc-number">1.</span> <span class="toc-text">程序的机器级表示（一）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E6%8C%87%E4%BB%A4%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-number">1.1.</span> <span class="toc-text">相关指令的使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ATT%E5%92%8Cintel"><span class="toc-number">1.1.1.</span> <span class="toc-text">ATT和intel</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F"><span class="toc-number">1.2.</span> <span class="toc-text">数据格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%A1%E6%81%AF%E8%AE%BF%E9%97%AE"><span class="toc-number">1.3.</span> <span class="toc-text">信息访问</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E6%95%B0%E6%8C%87%E7%A4%BA%E7%AC%A6"><span class="toc-number">1.3.1.</span> <span class="toc-text">操作数指示符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E9%80%81%E6%8C%87%E4%BB%A4"><span class="toc-number">1.3.2.</span> <span class="toc-text">数据传送指令</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#MOV%E7%B1%BB"><span class="toc-number">1.3.2.1.</span> <span class="toc-text">MOV类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MOVZ%E7%B1%BB"><span class="toc-number">1.3.2.2.</span> <span class="toc-text">MOVZ类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MOVS%E7%B1%BB"><span class="toc-number">1.3.2.3.</span> <span class="toc-text">MOVS类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%A5%E6%A0%88%E5%92%8C%E5%87%BA%E6%A0%88"><span class="toc-number">1.3.2.4.</span> <span class="toc-text">入栈和出栈</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%97%E6%9C%AF%E5%92%8C%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97"><span class="toc-number">1.3.3.</span> <span class="toc-text">算术和逻辑运算</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%89%E6%95%88%E5%9C%B0%E5%9D%80%E5%8A%A0%E8%BD%BD-leaq%E7%B1%BB"><span class="toc-number">1.3.3.1.</span> <span class="toc-text">有效地址加载 leaq类</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%80%E5%85%83%E5%92%8C%E4%BA%8C%E5%85%83%E6%93%8D%E4%BD%9C"><span class="toc-number">1.3.3.2.</span> <span class="toc-text">一元和二元操作</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%BB%E4%BD%8D%E6%93%8D%E4%BD%9C"><span class="toc-number">1.3.3.3.</span> <span class="toc-text">移位操作</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%AB%E5%AD%97%E8%BF%90%E7%AE%97"><span class="toc-number">1.3.3.4.</span> <span class="toc-text">八字运算</span></a></li></ol></li></ol></li></ol></li></ol>	
+        </div>
+    
+</div>
+
+
+    </div>
+</div>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/z16.model.json"},"display":{"position":"right","width":250,"height":400},"mobile":{"show":true},"log":false});</script></body>
+
+
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/typed.js"></script>
+<script src="/js/diaspora.js"></script>
+
+
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+
+
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<!-- Google Analytics -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=/"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '/');
+</script>
+<!-- End Google Analytics -->
+
+
+</html>

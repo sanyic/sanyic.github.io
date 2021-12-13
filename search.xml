@@ -2,7 +2,7 @@
 <search>
   <entry>
     <title>Hello World</title>
-    <url>/2021/11/01/%E5%85%B6%E4%BB%96/hello-world/</url>
+    <url>/2021/12/13/%E5%85%B6%E4%BB%96/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
 <h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
 
@@ -20,5 +20,381 @@
       <categories>
         <category>其他</category>
       </categories>
+  </entry>
+  <entry>
+    <title>信息的表示和处理</title>
+    <url>/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/</url>
+    <content><![CDATA[<h1 id="信息的表示和处理"><a href="#信息的表示和处理" class="headerlink" title="信息的表示和处理"></a>信息的表示和处理</h1><p>​        计算机将8个位的块作为最小的内存寻址单位，也就是字节。而机器级程序将内存视作一个很大的字节数组，称之为<strong>虚拟内存</strong>。</p>
+<p>​        在虚拟内存中，每个字节作为单位，由唯一的数字进行标识，这个数字也就叫做它的地址。所有可能的地址集合就叫做虚拟地址空间。</p>
+<p>​        虚拟地址空间是一种展现给机器级程序的重要抽象概念，具体由多种硬件和操作系统协同完成。</p>
+<p>​        编译器和运行时系统如何将储存器空间进行划分，来对不同程序对象（程序数据，指令，控制信息）进行分配和管理是信息存储的重点。</p>
+<h2 id="信息存储"><a href="#信息存储" class="headerlink" title="信息存储"></a>信息存储</h2><h3 id="字和字长"><a href="#字和字长" class="headerlink" title="字和字长"></a>字和字长</h3><p>​        字长是指明指针数据类型大小的标准。虚拟地址依赖一个字来编码，所以字长决定的最重要的系统参数就是虚拟地址空间的<strong>最大大小</strong>。一个字长为w的机器，其最多访问2^w^个字节。32位机器的虚拟地址是4GB而64位更是达到了16EB。</p>
+<p>​        32位和64位程序的区别并不在于运行的机器，而是编译的方式。绝大多数的64位机器会对32位程序进行向后兼容，同时<code>linux&gt;gcc -m32 prog.c</code>可以在64位电脑上编译出32位的程序，将 -m32 改为 -m64可以编译64位的程序。</p>
+<p>​        在过去32位程序和32位机器是主流的组合，而随着64位机器的普及，很多程序对字长的依赖性就暴露了出来，例如C语言中指定一个int类型来存放指针在32位系统上正常而在64位系统上就会导致问题。同时long和unsigned long的典型大小在两类机器上也有所不同。</p>
+<h3 id="对象的地址和字节序"><a href="#对象的地址和字节序" class="headerlink" title="对象的地址和字节序"></a>对象的地址和字节序</h3><p>​        在几乎所有的机器上，跨越多字的对象都是连续排列。如果我们要实现跨越多字节的程序对象的寻址，需要知道两个必要条件，对象的地址和内存排列格式。</p>
+<p>​        对象的地址指的是它使用字节中的最小的地址，如果有一个int类型x，其四个字节排列在0x100,0x101,0x102,0x103上，那么0x100就是这个对象的地址。</p>
+<p>​        在了解字节序之前，我们先将所研究的程序对象的字节进行下划分。以之前的x为例，它一共有32位，我们将第31位称为最高有效位，那么第0位就成为了最低有效位。如果一个字节包含最低有效位在内的8个字节，那么称它为最低有效字节，如果包含了最高有效位在内的8个字节，那么就称为最高有效字节。机器将程序对象按最低有效字节到最高有效字节的顺序存放称为小端序，它的最低有效字节在最前端。反之将最高有效字节放在前面称为大端序。</p>
+<p>​        我们设x为0x12345678.最高有效字节应该存储0x78，最低有效字节存储0x12.如果机器在地址0x100中存放了12，在0x103中存放了78，那么这种机器就采用的是小端序。</p>
+<p>​        大多数的Inter兼容机都只采用小端序，移动端常用的ARM微处理器可以按两种端序操作，但安卓和iOS操作系统只支持小端序。</p>
+<p>​        一般来说，我们看不到字节序带来的影响。然而一方面，在网络传输时，大小端序的机器互通会存在影响，此时我们应该将程序在内部转换为网络标准。另一方面，在直接检查机器级代码的时候，如果不明白字节序会对我们的理解带来障碍。</p>
+<h2 id="字符串，代码的表示"><a href="#字符串，代码的表示" class="headerlink" title="字符串，代码的表示"></a>字符串，代码的表示</h2><p>​        字符串和代码的编码差别很大。C语言中的字符串被编码为一个以null结尾的字符数组，每个字符以标准编码表示，最常见的是ASCII，这使得它在任何系统上都得出相同的结果，与字节序和字节大小无关。</p>
+<p>​        当指令编码为二进制代码时，不同的机器类型和操作系统会采用不同且不兼容的指令和编码方式，二进制代码很少能在不同机器和操作系统间移植。</p>
+<h2 id="整数表示"><a href="#整数表示" class="headerlink" title="整数表示"></a>整数表示</h2><p>​        整数可分为两种类型，只表示非负数的无符号整数和表示正数，负数，0的有符号整数。</p>
+<h3 id="编码形式"><a href="#编码形式" class="headerlink" title="编码形式"></a>编码形式</h3><p>​        对于0到2^w^-1的无符号整数和-2^w-1^ 到2^w-1^的有符号整数，我们可以用唯一的w位的位向量来表示。同时对于一个向量x=[x<del>w-1</del>,x<del>w-2</del>,……x<del>0</del>],在特定的规则下，就可以将它与整数映射。</p>
+<p>​        对于无符号整数</p>
+<p><img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211209192538409.png" alt="image-20211209192538409"></p>
+<p>​        有如下表示</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211209193152681.png" alt="image-20211209193152681" style="zoom:33%;">
+
+<p>​        对于有符号整数</p>
+<p><img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211209192615658.png" alt="image-20211209192615658"></p>
+<p>​        有符号整数的最高位x<del>w-1</del>被定义为符号位，有着-2^w-1^的权重，也就是无符号整数中最高位权重的负数。这样一来，我们就可以表达负数。这种给最高位负权的形式叫做补码。</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211209193304347.png" alt="image-20211209193304347" style="zoom:33%;">
+
+<p>​        由于特殊的位模式，补码的范围是不对称的，补码能表示的正数的最大值要比负数的最大值小1。同时，相同位下无符号整数所能表达的范围比最大的有符号整数要大一点。</p>
+<blockquote>
+<p>有符号整数的其他编码 –反码和原码</p>
+<p>反码：最高有效位的权重是-（2^w-1^-1）,比补码要小</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211209200041387.png" alt="image-20211209200041387" style="zoom:50%;">
+
+<p>原码：把最高有效位作为符号位，来决定整个数字的符号</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211209200119482.png" alt="image-20211209200119482" style="zoom:50%;">
+
+<p>两种编码有个奇怪的问题，对于0有正0和负0两种表示：</p>
+<p>​        在w = 4时，[0000]都表示为+0，而在反码中[1111]表示-0，在原码中[1000]表示-0，几乎所有的现代机器都采用了补码。</p>
+</blockquote>
+<h3 id="转换"><a href="#转换" class="headerlink" title="转换"></a>转换</h3><p>​        C语言可以实现无符号整数和有符号整数之间的转换。对于一个int类型的数a<code>(unsigned int)a</code>就可以强制类型转换为无符号类型</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">short</span> <span class="keyword">int</span> a = <span class="number">-12345</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">short</span> <span class="keyword">int</span> ua = (<span class="keyword">unsigned</span> <span class="keyword">short</span>) a;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;a = %d, ua = %u\n&quot;</span>,a,ua);</span><br></pre></td></tr></table></figure>
+
+<p><code>a = -12345， ua = 53191</code></p>
+<p>​        这样的结果是由于大多数都C语言在实现类型转换的时候不会去改变整数的位级表示，而是改变了同一位表示下的映射关系。</p>
+<p>​        同时，请注意 12345+53191=65536（2^16^）,这可以推广到位表示一定的前提下任两个补码和无符号数的关系。</p>
+<p>​        C语言同时支持无符号和有符号整数（C以外很少有语言支持无符号整数），同时规定了如果一个运算其中一个运算书是有符号而另一个是无符号的，那么会对有符号数进行隐式的强制转换，对于&lt;  和  &gt;会导致非直观的结果</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211209215013016.png" alt="image-20211209215013016" style="zoom:50%;">
+
+<h3 id="扩展和截断"><a href="#扩展和截断" class="headerlink" title="扩展和截断"></a>扩展和截断</h3><p>​        扩展是从一个较小的数据类型转换到较大类型而保持其大小不变的操作。</p>
+<p>​        对于无符号数，我们只需要在表示的开头添加0，这种运算被称为零扩展。对于有符号数，我们则需要对它的符号位进行扩展，即在表示的开头补充上和符号位相同的值。</p>
+<p>​        截断是一种和扩展相反的操作。它用来将较大的数据类型转换为较小的类型。</p>
+<p>​        对于无符号数，我们可以直接丢弃表示头部的部分位进行截断，而对于有符号数在截断后需要对符号位重新赋予负权。</p>
+<h2 id="整数运算"><a href="#整数运算" class="headerlink" title="整数运算"></a>整数运算</h2><h3 id="溢出"><a href="#溢出" class="headerlink" title="溢出"></a>溢出</h3><p>​        在进行加法和乘法运算时，常常会出现溢出的情况。两个位表示有4位的数字相加的结果可能需要一个5位的数字表示。我们用截断来应对这种情况，避免数据扩张。</p>
+<table>
+<thead>
+<tr>
+<th>截断的结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>无符号数加法：发生溢出则减去2^w^</td>
+</tr>
+<tr>
+<td>补码加法：正溢出减去2^w^，负溢出加上2^w^</td>
+</tr>
+<tr>
+<td>无符号数乘法：溢出后结果对2^w^取模</td>
+</tr>
+<tr>
+<td>补码乘法：溢出后结果对2^w^取模，再转换成补码</td>
+</tr>
+</tbody></table>
+<p>​        在不同的运算发生溢出时有不同的表述，但是在位级上看，它们都发生了截断运算来保证自己的数据大小不会扩张。整数运算实际上是一种模运算形式。</p>
+<h3 id="乘法优化实现"><a href="#乘法优化实现" class="headerlink" title="乘法优化实现"></a>乘法优化实现</h3><p>​        相较于加减法和位运算，乘法显得相当慢。</p>
+<p>​        因此，在少量移位，加法和减法足够时，编译器采用如下优化</p>
+<p><code>x*14 -&gt; (x&lt;&lt;3)+(x&lt;&lt;2)+(x&lt;&lt;1)</code></p>
+<p>或者</p>
+<p><code>x*14 -&gt; (x&lt;&lt;4)-(x&lt;&lt;1)</code></p>
+<h2 id="浮点数"><a href="#浮点数" class="headerlink" title="浮点数"></a>浮点数</h2><h3 id="表示"><a href="#表示" class="headerlink" title="表示"></a>表示</h3><h4 id="定点表示"><a href="#定点表示" class="headerlink" title="定点表示"></a>定点表示</h4><p>​        拿十进制的小数表示法来说，小数点之前的数字按位赋予10的正幂，得到整数值。对于小数点右边的梳子赋予10的负幂，得到小数值。</p>
+<p>​        定点表示二进制小数的思路和十进制相似：小数点左边赋予2的正幂，右边赋予2的负幂。来表示小数，如下  <img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211210103414206.png" alt="image-20211210103414206" style="zoom: 50%;"></p>
+<p>​        对于101.11我们会得到5+3/4。</p>
+<p>​        事实上用二进制来表示小数很难做到精确，它只能准确的表达能够写成x X 2^y^的数，其他只能通过增加二进制表示的长度来提升精度。</p>
+<h4 id="IEEE表示"><a href="#IEEE表示" class="headerlink" title="IEEE表示"></a>IEEE表示</h4><p>​        IEEE表示法更直接地表示能写成x X 2^y^格式的数，并规定以下格式</p>
+<p><img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211210104020169.png" alt="image-20211210104020169"></p>
+<table>
+<thead>
+<tr>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>符号（s）决定数字的正(0)负(1)，0的符号位特殊处理</td>
+</tr>
+<tr>
+<td>尾数（M）一个二进制小数</td>
+</tr>
+<tr>
+<td>阶码（E）对浮点数加权</td>
+</tr>
+</tbody></table>
+<p>​        在这种规定下，我们只需要分别用二进制表示出s,M,E就可以确定下来一个浮点数。IEEE将位表示划分为三个字段分别对这些值编码。</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>32位下长度（float）</th>
+<th>64位下长度（double）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>符号位：用一个单独的位编码符号s</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>阶码字段：k位解码字段exp = e<del>k-1</del>…e<del>1</del>e<del>0</del>编码阶码E</td>
+<td>8</td>
+<td>11</td>
+</tr>
+<tr>
+<td>小数字段：n位编码frac = f<del>n-1</del>…f<del>1</del>f<del>0</del>编码尾数M</td>
+<td>23</td>
+<td>52</td>
+</tr>
+</tbody></table>
+<p>​        根据exp的值，被编码的值可以分成三种情况，规格化，非规格化和特殊值</p>
+<p><img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E4%BF%A1%E6%81%AF%E7%9A%84%E8%A1%A8%E7%A4%BA%E5%92%8C%E5%A4%84%E7%90%86/image-20211210105308430.png" alt="image-20211210105308430"></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>规格化</th>
+<th>非规格化</th>
+<th>特殊值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>定义</td>
+<td>exp不全为0或1</td>
+<td>exp全为0</td>
+<td>exp全为1</td>
+</tr>
+<tr>
+<td>大小（s&gt;1）</td>
+<td>表示大于等于1的数（M = 1+f）</td>
+<td>表示近似1到非常接近0的数（M = f）</td>
+<td>+∞(小数字段为0)，NaN</td>
+</tr>
+<tr>
+<td>E</td>
+<td>e-Bias</td>
+<td>1-Bias</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>Bias是大小为2^k-1^-1的偏置值。</p>
+<h3 id="整数转换为浮点数"><a href="#整数转换为浮点数" class="headerlink" title="整数转换为浮点数"></a>整数转换为浮点数</h3><p>​        接下来我们将整数12345转换为浮点数12345.0</p>
+<ol>
+<li><p>写出12345的位表示[11000000111001],共14位。</p>
+</li>
+<li><p>将二进制小数点左移13位创建规格化表示：</p>
+<p>12345 = 1.1000000111001 x 2^13^</p>
+</li>
+<li><p>按照规格化隐含表示1的规定，丢弃开头的1，尾部填充10个0构造小数字段</p>
+</li>
+<li><p>13+127（Bias）来构造阶码字段，填充在头部</p>
+</li>
+<li><p>最高位填充0作为表示正数的符号位</p>
+<p>这样就构造出来[01000110010000001110010000000000]，也就是IEEE表示的12345.0</p>
+</li>
+</ol>
+<h3 id="舍入"><a href="#舍入" class="headerlink" title="舍入"></a>舍入</h3><p>​        浮点运算只能近似的表示实数运算，我们通过舍入来找到最接近的匹配值，而另一种方法是维持实际数字的上界和下界。因此，舍入运算最关键的地方在于确定舍入的方向。</p>
+<p>​        IEEE规定了四种舍入的方式。</p>
+<table>
+<thead>
+<tr>
+<th>舍入方式</th>
+<th>描述</th>
+<th>舍入1.40</th>
+<th>舍入1.50</th>
+<th>舍入-1.50</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>向偶数舍入</td>
+<td>近似于十进制的四舍五入，多余位位表示大于[1000]进一， 小于直接舍去。多余位位表示为[1000]那么此时最低位为0则舍掉多余位，最低位为1则进位1。</td>
+<td>1</td>
+<td>2</td>
+<td>-2</td>
+</tr>
+<tr>
+<td>向0舍入</td>
+<td>正数向下，负数向上舍入</td>
+<td>1</td>
+<td>1</td>
+<td>-1</td>
+</tr>
+<tr>
+<td>向上舍入</td>
+<td>对正数，多余位全为0则直接截尾，不全为0则向最低有效位进1；负数不管多余位是多少直接截尾即可。</td>
+<td>2</td>
+<td>2</td>
+<td>-1</td>
+</tr>
+<tr>
+<td>向下舍入</td>
+<td>对负数，多余位全为0则直接截尾，不全为0则向最低有效位进1；正数不管多余位是多少直接截尾即可。</td>
+<td>1</td>
+<td>1</td>
+<td>-2</td>
+</tr>
+</tbody></table>
+<p>​        默认的舍入方式是向偶数舍入，其它三种舍入方式常用来确定舍入的界限。舍入方式不仅能运用在确定实数，也能运用在确定二进制小数上。</p>
+<h3 id="浮点运算"><a href="#浮点运算" class="headerlink" title="浮点运算"></a>浮点运算</h3><p>​        浮点数的运算和整数运算大体相似，但最后的结果会根据所需的精度要求进行向偶数舍入。但最大的区别在于浮点数不具备结合性和交换性。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">(<span class="number">3.14</span>+<span class="number">1E10</span>) - <span class="number">1E10</span> = <span class="number">0.0</span></span><br><span class="line"><span class="number">3.14</span> + (<span class="number">1E10</span><span class="number">-1E10</span>) = <span class="number">3.14</span></span><br><span class="line">(<span class="number">1E10</span>*<span class="number">1E10</span>)*<span class="number">1E-20</span> = +∞</span><br><span class="line"><span class="number">1E20</span>*(<span class="number">1E20</span>*<span class="number">1E-20</span>) = <span class="number">1E20</span></span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>CSAPP笔记</category>
+      </categories>
+      <tags>
+        <tag>信息存储</tag>
+        <tag>浮点数</tag>
+        <tag>编码</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>程序的机器级表示（一）</title>
+    <url>/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/</url>
+    <content><![CDATA[<h1 id="程序的机器级表示（一）"><a href="#程序的机器级表示（一）" class="headerlink" title="程序的机器级表示（一）"></a>程序的机器级表示（一）</h1><p>计算机使用多重形式的抽象来隐藏实现的细节，对于机器级编程，需要特别关注ISA和虚拟地址。</p>
+<ul>
+<li>ISA（Instruction Set Architecture）：指令集架构.定义处理器状态，指令的格式，以及每条指令的影响。ISA将程序的行为描述为好像每条指令都是依次执行。复杂的处理器硬件可以采取措施与每条指令的执行完全同步。</li>
+<li>虚拟地址：储存器系统的实现是多个硬件储存器和操作系统的组合，虚拟内存将其抽象为一个非常大的字节数组。</li>
+</ul>
+<h2 id="相关指令的使用"><a href="#相关指令的使用" class="headerlink" title="相关指令的使用"></a>相关指令的使用</h2><p>预先写好两个程序</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">//main.c</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">multstore</span> <span class="params">(<span class="keyword">long</span>,<span class="keyword">long</span>,<span class="keyword">long</span> *)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> d;</span><br><span class="line">    multstore(<span class="number">2</span>,<span class="number">3</span>,&amp;d);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;2 * 3 --&gt; %ld\n&quot;</span>,d);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">long</span> <span class="title">mult2</span><span class="params">(<span class="keyword">long</span> a,<span class="keyword">long</span> b)</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> s= a * b;</span><br><span class="line">    <span class="keyword">return</span> s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">//multstroe.c</span></span><br><span class="line"><span class="function"><span class="keyword">long</span> <span class="title">mult2</span><span class="params">(<span class="keyword">long</span>,<span class="keyword">long</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">multstore</span> <span class="params">(<span class="keyword">long</span> x,<span class="keyword">long</span> y,<span class="keyword">long</span> *dest)</span></span>&#123;</span><br><span class="line">    <span class="keyword">long</span> t = mult2(x,y);</span><br><span class="line">    *dest = t;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>两个程序分开都是不能独立运行的，我们可以用<code>linux&gt;gcc -og -o prog main.c multstore.c</code>来连接两个程序来构建一个可执行的文件</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204155734109.png" alt="image-20211204155734109" style="zoom:33%;">
+
+<p><code>objdump -d prog</code>可以反汇编查看ATT的汇编代码同时查看机器码</p>
+<p>可以看到链接器填上了callq 指令调用mult2需要使用的地址，同时出现了一些nop指令用来让代码变为16字节，更好的存放下一个代码块</p>
+<p><code>linux&gt;gcc -og -s main.c</code>进行反编译实现汇编代码文件main.s</p>
+<p><code>linux&gt;gcc  -og -o main.s</code>进行机器代码实现main.o，此文件需要objdump来查看</p>
+<h3 id="ATT和intel"><a href="#ATT和intel" class="headerlink" title="ATT和intel"></a>ATT和intel</h3><table>
+<thead>
+<tr>
+<th></th>
+<th>ATT</th>
+<th>INTEL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>指令大小后缀</td>
+<td>有，如callq</td>
+<td>无，只有call，push</td>
+</tr>
+<tr>
+<td>寄存器名称</td>
+<td>如%rsp</td>
+<td>如rsp</td>
+</tr>
+<tr>
+<td>内存位置表示</td>
+<td>（%rbx）</td>
+<td>QWOR PTR [rbx]</td>
+</tr>
+<tr>
+<td>多个操作数</td>
+<td>二者相反</td>
+<td>二者相反</td>
+</tr>
+<tr>
+<td>适用范围</td>
+<td>GCC OBJDUMP</td>
+<td>微软系列</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>在C中插入汇编代码</p>
+<p>GCC内联特性，用asm伪代码在C中包含简短的汇编</p>
+<p>将完整的函数放进独立的汇编文件，用汇编器和链接器相连</p>
+</blockquote>
+<h2 id="数据格式"><a href="#数据格式" class="headerlink" title="数据格式"></a>数据格式</h2><img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204162835466.png" alt="image-20211204162835466" style="zoom: 67%;">
+
+<p>​        x86系列实现过80位，10字节的long double浮点类型运算，不过移植性和实用性都很差</p>
+<p>​        gcc的汇编代码都有一个字符的后缀来表示操作数的大小，movb表示字节，movw传送字，movl传送双字，movq传送四字。l同时也表示8字节的 double却并不冲突，因为浮点数由一组不同的指令和寄存器操作</p>
+<h2 id="信息访问"><a href="#信息访问" class="headerlink" title="信息访问"></a>信息访问</h2><p>x86-64一共有16个寄存器，少数指令会使用某些特定的寄存器。此外有一组标准规范控制如何使用寄存器来管理栈，传参，返回，存储局部和临时数据。</p>
+<p><img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204171351192.png" alt="image-20211204171351192"></p>
+<p>对于生成小于8字节的指令，1,2字节会保持剩下的字节不变，生成4字节数字的指令会把高4位清0</p>
+<h3 id="操作数指示符"><a href="#操作数指示符" class="headerlink" title="操作数指示符"></a>操作数指示符</h3><p>大多数指令有一个或多个操作数，操作数可以分为三种形式立即数，寄存器和内存。书写有特殊的格式</p>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204174509586.png" alt="image-20211204174509586" style="zoom:67%;">
+
+<p>比较神奇的写法</p>
+<h3 id="数据传送指令"><a href="#数据传送指令" class="headerlink" title="数据传送指令"></a>数据传送指令</h3><p>最频繁使用的指令是数据传送指令，将数据从一个位置复制到另一个位置。最简单的数据传送指令是MOV类，它只将数据从源复制到目的位置，不做任何变化，</p>
+<h4 id="MOV类"><a href="#MOV类" class="headerlink" title="MOV类"></a>MOV类</h4><p>mov类由四条指令组成：movb，movw，movl，movq，这些指令仅仅是操作数大小上有不同。</p>
+<p>mov的源操作数是一个<strong>立即数</strong> ，储存在寄存器或者内存中，目的操作数指定一个位置，要么是寄存器，要么是内存。</p>
+<p>x86-64限制，源和目的操作数<strong>不能同时指向内存地址</strong>，两个内存交换需要多次mov。同时<strong>，不同宽度的寄存器之间直接传输是不允许的</strong>，唯一的例外是通用寄存器和段寄存器之间的传输</p>
+<p>mov只能表示32位补码作为源操作数，<strong>符号扩展</strong>得64位的值。movabsq能够以任意64位的立即数值作为源操作数，并只能以寄存器作为目的。</p>
+<h4 id="MOVZ类"><a href="#MOVZ类" class="headerlink" title="MOVZ类"></a>MOVZ类</h4><p>movz类相当于mov类的变式，movz类有movzbw,movzbl,movzwl,movzbq,movzwq,前一个大小指示符指源的大小，后一个指目的的大小。</p>
+<p>该类数据传输指令会将目的中剩余的字节进行零拓展</p>
+<h4 id="MOVS类"><a href="#MOVS类" class="headerlink" title="MOVS类"></a>MOVS类</h4><p>movs类和movz类相似，会对目的操作数剩余的位数进行符号拓展。另外movs类有一个cltq，固定将%eax符号拓展到%rax</p>
+<blockquote>
+<p>练习题的tip</p>
+<p>不同宽度的寄存器之间直接传输是不允许的，唯一的例外是通用寄存器和段寄存器之间的传输</p>
+<p>%sl不存在。。。</p>
+<p>%ebx不能作为地址</p>
+<p>%si是16位寄存器</p>
+<p>C中的“指针”就是地址，间接引用指针就是将指针放入寄存器，然后再内存引用中使用寄存器</p>
+<p>局部变量常常保存在寄存器中，访问速度远快于内存。</p>
+<p>int类型转移是需要特别注意，<strong>（movl）</strong>，其他类型要注意是否有符号。例如movzbl也会清零高四位</p>
+</blockquote>
+<h4 id="入栈和出栈"><a href="#入栈和出栈" class="headerlink" title="入栈和出栈"></a>入栈和出栈</h4><p>pushq和popq</p>
+<p>pushq：相当于</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">subq $8 , %rsp</span><br><span class="line">movq %rax , (%rsp)</span><br></pre></td></tr></table></figure>
+
+<p>popq：相当于</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">movq (%rsp) , %rax</span><br><span class="line">addq $8 , %rsp</span><br></pre></td></tr></table></figure>
+
+<h3 id="算术和逻辑运算"><a href="#算术和逻辑运算" class="headerlink" title="算术和逻辑运算"></a>算术和逻辑运算</h3><h4 id="有效地址加载-leaq类"><a href="#有效地址加载-leaq类" class="headerlink" title="有效地址加载 leaq类"></a>有效地址加载 leaq类</h4><p>实际上leaq是movq的变形，看似内存引用，实际上是将有效地址写入目的操作数。</p>
+<ul>
+<li>类似于C中的&amp;操作符，为后面的内存引用产生指针</li>
+<li>简单的算术操作</li>
+</ul>
+<img src="/2021/12/13/CSAPP%E7%AC%94%E8%AE%B0/%E7%A8%8B%E5%BA%8F%E7%9A%84%E6%9C%BA%E5%99%A8%E7%BA%A7%E8%A1%A8%E7%A4%BA/image-20211204201413381.png" alt="image-20211204201413381" style="zoom:50%;">
+
+<h4 id="一元和二元操作"><a href="#一元和二元操作" class="headerlink" title="一元和二元操作"></a>一元和二元操作</h4><ul>
+<li>一元操作：decq，incq，negq。notq等类似于 i++</li>
+</ul>
+<img src="https://img2018.cnblogs.com/blog/1539443/201811/1539443-20181127212130893-665387977.png" alt="img" style="zoom: 67%;">
+
+<ul>
+<li>二元操作：其中第二个操作数既是源又是目的，不过，源操作数是第一个，目的操作数是第二个 <code>X-=Y</code></li>
+</ul>
+<p>因此第二个操作数不能是立即数，如果第二个操作数是内存地址的时候，处理器必须从内存读出值，操作，再写回内存地址</p>
+<h4 id="移位操作"><a href="#移位操作" class="headerlink" title="移位操作"></a>移位操作</h4><p>先给出移位量，再给出要移位的数。移位两可以是立即数，也可以是存放在单字节寄存器**%cl**中的数。</p>
+<p>对于x86-64来说，对于w位的操作数，移位数由%cl的m位来决定 ，满足2^m^ = w,[在%cl为FF时，salb移动7位，salw移动15位，sall移动31位]</p>
+<p>如图，左移有两个名字，SAL和SHL，二者并无差异，而SAR和SHR，分别为算术右移和逻辑右移。</p>
+<h4 id="八字运算"><a href="#八字运算" class="headerlink" title="八字运算"></a>八字运算</h4><table>
+<thead>
+<tr>
+<th>指令</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>clto：八字拓展</td>
+</tr>
+<tr>
+<td>mulq：无符号乘法</td>
+</tr>
+<tr>
+<td>imulq：有符号乘法</td>
+</tr>
+<tr>
+<td>divq：无符号除法</td>
+</tr>
+<tr>
+<td>idivq：有符号除法</td>
+</tr>
+</tbody></table>
+<p>imulq有两种形式，处理器可以通过操作数的个数来判断，对于只有一个操作数时，%rax作为另一个操作数</p>
+<p>idivq则是以%rdx和%rax作为128位的被除数，操作数作为除数，商存储在%rax，余数存储在%rdx</p>
+<p>此外，对于大多数64位的除法来说，被除数也常常是64位，此时%rdx应该是%rax的0拓展或者符号拓展，符号拓展可以用cqto来完成，不需要操作数。</p>
+<p>% rdx （高64位）和% rax（低64位）；一起表示128位八字的数据</p>
+]]></content>
+      <categories>
+        <category>CSAPP笔记</category>
+      </categories>
+      <tags>
+        <tag>汇编</tag>
+      </tags>
   </entry>
 </search>
