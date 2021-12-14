@@ -1,0 +1,394 @@
+
+<!DOCTYPE html>
+<html lang="“zh-CN”" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PE字段解析 - sanyicの博客</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="sanyic,"> 
+    <meta name="description" content="sanyic,PE字段解析本文是对PE头部字段的逐个解析，很无聊（
+PE头部字段IMAGE_NT_HEADER，由三个字段构成。
+.Signature就是”P”，”E”加上两个0，也是PE这个称呼的由来。如果更改,"> 
+    <meta name="author" content="sanyic"> 
+    <link rel="alternative" href="atom.xml" title="sanyicの博客" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.ico"> 
+    
+    
+<link rel="stylesheet" href="/css/diaspora.css">
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body class="loading">
+    <span id="config-title" style="display:none">sanyicの博客</span>
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="iconfont icon-home image-icon" href="javascript:;" data-url="https://sanyic.github.io"></a>
+    <div title="播放/暂停" class="iconfont icon-play"></div>
+    <h3 class="subtitle">PE字段解析</h3>
+    <div class="social">
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="iconfont icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">PE字段解析</h1>
+        <div class="stuff">
+            <span>十二月 14, 2021</span>
+            
+  <ul class="post-tags-list" itemprop="keywords"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/PE/" rel="tag">PE</a></li></ul>
+
+
+        </div>
+        <div class="content markdown">
+            <h1 id="PE字段解析"><a href="#PE字段解析" class="headerlink" title="PE字段解析"></a>PE字段解析</h1><p>本文是对PE头部字段的逐个解析，很无聊（</p>
+<h2 id="PE头部字段"><a href="#PE头部字段" class="headerlink" title="PE头部字段"></a>PE头部字段</h2><p>IMAGE_NT_HEADER，由三个字段构成。</p>
+<h4 id="Signature"><a href="#Signature" class="headerlink" title=".Signature"></a>.Signature</h4><p>就是”P”，”E”加上两个0，也是PE这个称呼的由来。如果更改其中的任何一个字节，操作系统就无法把该文件识别为正确的PE文件。</p>
+<h4 id="FileHeader"><a href="#FileHeader" class="headerlink" title=".FileHeader"></a>.FileHeader</h4><p>+0004h，结构体。该结构指向IMAGE_FILE_HEADER，由于PE扩展自通用COFF规范，该字段在官方文档中被称为标准COFF头。</p>
+<h4 id="OptionalHeader"><a href="#OptionalHeader" class="headerlink" title=".OptionalHeader"></a>.OptionalHeader</h4><p>+0018h，结构体。该结构指向IMAGE_OPTIONAL_HEADER32。Windows操作系统可执行文件的大部分特性均在这个结构里呈现。</p>
+<p>因为在符合COFF规范的”.obj”目标文件中该部分并不存在，所以该部分被称为OptionalHeader（可选的头部信息，简称“可选头”），它是操作系统映像文件所独有的头部信息。</p>
+<p>可选头又分为两部分，前10个字段原属于COFF，用来加载和运行一个可执行文件；后21个字段则是通过链接器追加的。它们作为PE扩展的部分，用z于描述可执行文件的一些信息，供PE加载器加载使用。</p>
+<h3 id="IMAGE-FILE-HEADER字段解析"><a href="#IMAGE-FILE-HEADER字段解析" class="headerlink" title="IMAGE_FILE_HEADER字段解析"></a>IMAGE_FILE_HEADER字段解析</h3><h4 id="Machine"><a href="#Machine" class="headerlink" title=".Machine"></a>.Machine</h4><p>+0004h，单字，指定PE运行的平台。由于Windows最初被设计为可以运行在Intel、Sun、Dec、IBM等多种硬件平台上，或者能模拟这些平台的软件环境中，而不同的硬件平台其指令的机器码不相同，因此为不同平台编译的EXE文件是无法通用的。</p>
+<p>MASM32汇编可以用<code>.386</code>指定inter 386平台</p>
+<p>相关数值对应的处理器如下</p>
+<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160557314.png" alt="image-20211214160557314"></p>
+<p>x64下notepad.exe的IMAGE_FILE_HEADER.Machine值</p>
+<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160631279.png" alt="image-20211214160631279"></p>
+<h4 id="NumberOfSections"><a href="#NumberOfSections" class="headerlink" title=".NumberOfSections"></a>.NumberOfSections</h4><p>+0006h，单字。文件中存在的节的总数。可以有0个节，但数值不能小于1，也不能超过96。如果数值是0，操作系统会提示不是有效程序。在PE中增加或删除节必须修改此处的值。并且，PE节数必须和<strong>内存中的节</strong>相同，否则装载错误。</p>
+<h4 id="TimeDataStamp"><a href="#TimeDataStamp" class="headerlink" title=".TimeDataStamp"></a>.TimeDataStamp</h4><p>+0008h，双字，时间戳。低32位存放的值是自1970年1月1日00:00时开始到创建时间为止的总秒数。与操作系统文件属性里看到的三个时间（创建时间、修改时间、访问时间）没有关联，可以随意修改。</p>
+<h4 id="PointerToSymbolTable"><a href="#PointerToSymbolTable" class="headerlink" title=".PointerToSymbolTable"></a>.PointerToSymbolTable</h4><p>+000Ch，双字。COFF符号表的文件偏移。如果不存在COFF符号表，此值为0。对于映像文件来说，此值为0，因为微软已经不在PE中使用COFF调试信息。</p>
+<h4 id="SizeOfOptionalHeader"><a href="#SizeOfOptionalHeader" class="headerlink" title=".SizeOfOptionalHeader"></a>.SizeOfOptionalHeader</h4><p>+0014h，单字。指定IMAGE_OPTINOAL_HEADER32的长度，32位PE默认情况00e2h；64位默认为00F0h。</p>
+<p>可以自己定义这个值的大小，不过需要注意两点：</p>
+<p>1）更改完以后，需要自行将文件中IMAGE_OPITONAL_HEADER32的大小扩充为你指定的值（一般以0补足）。</p>
+<p>2）扩充完以后，要维持文件中的对齐特性（比如此处增加了8个字节后，一定在后面相应地删除8个字节，以保证.text节起始位置处于0400h）。</p>
+<h4 id="Characteristics"><a href="#Characteristics" class="headerlink" title=".Characteristics"></a>.Characteristics</h4><p>+0016h，单字，文件属性标志字段。不同位定义了不同文件属性。</p>
+<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214162935175.png" alt="image-20211214162935175"></p>
+<p>当第10位为1时，如果此映像文件在可移动存储介质上，那么加载器将完全加载它并把它复制到内存交换文件中。</p>
+<p>当第11位为1时，如果此映像文件在网络上，那么加载器也将完全加载它并把它复制到内存交换文件中。</p>
+<p>这是一个很重要的字段，不同的定义将影响系统对文件的装入方式。</p>
+<h3 id="IMAGE-OPTIONAL-HEADER32"><a href="#IMAGE-OPTIONAL-HEADER32" class="headerlink" title="IMAGE_OPTIONAL_HEADER32"></a>IMAGE_OPTIONAL_HEADER32</h3><h4 id="Magic"><a href="#Magic" class="headerlink" title=".Magic"></a>.Magic</h4><p>+0018h，单字。魔术字，说明文件类型。</p>
+<p>如果为010BH，则表示该文件为PE32；如果为0107h，则表示文件为ROM映像；如果为020BH，则表示该文件为PE32+，即64位下的PE文件。</p>
+<h4 id="MajorLinkerVersion和-MinorLinkerVersion"><a href="#MajorLinkerVersion和-MinorLinkerVersion" class="headerlink" title=".MajorLinkerVersion和.MinorLinkerVersion"></a>.MajorLinkerVersion和.MinorLinkerVersion</h4><p>+001ah，单字。指定链接器版本号，对执行没有任何影响。</p>
+<h4 id="SizeOfCode"><a href="#SizeOfCode" class="headerlink" title=".SizeOfCode"></a>.SizeOfCode</h4><p>+001ch，双字。所有代码节的总和（以字节计算）该大小是基于文件对齐后的大小，而非内存对齐后的大小。内存对齐的大小基于另一个字段.SizeOfImage。另外：判断某个节是否包含代码的方法不是根据节的属性中是否含有IMAGE_SCN_MEM_EXECUTE标志，而是根据节的属性中是否含有IMAGE_SCN_CNT_CODE标志。</p>
+<h4 id="SizeOfInitializedData和-SizeOfUninitializedData"><a href="#SizeOfInitializedData和-SizeOfUninitializedData" class="headerlink" title=".SizeOfInitializedData和.SizeOfUninitializedData"></a>.SizeOfInitializedData和.SizeOfUninitializedData</h4><p>+0020h，双字。包含已经初始化的的数据的节的总大小。</p>
+<p>+0024h，双字。。包含所有未初始化的数据的节的总大小。</p>
+<p>未初始化在文件中不占有空间，但是在加载的内存中，PE应该为数据分配适当大小的虚拟地址空间。</p>
+<h4 id="AddressOfEntryPoint"><a href="#AddressOfEntryPoint" class="headerlink" title=".AddressOfEntryPoint"></a>.AddressOfEntryPoint</h4><p>+0028h，双字。记录程序启动代码距离PE加载后的起始位置的RVA，对于一般程序映像来说，它就是启动地址；对于设备驱动程序来说，它是初始化函数的地址。入口点对于DLL来说是可选的，如果不存在入口点，这个字段必须设置为0。</p>
+<p>病毒，加密程序，补丁可以通过劫持这里的值来让程序运行其他用途的代码字段。</p>
+<h4 id="BaseOfCode和-BaseOfData"><a href="#BaseOfCode和-BaseOfData" class="headerlink" title=".BaseOfCode和.BaseOfData"></a>.BaseOfCode和.BaseOfData</h4><p>+002Ch，双字。记录代码节到映像基址的RVA，代码节一般紧随在PE后，名称为“.text”</p>
+<p>+0030h，双字。记录数据节到映像基址的RVA，数据节一般位于文件末尾，名称为“.data”</p>
+<h4 id="ImageBase"><a href="#ImageBase" class="headerlink" title=".ImageBase"></a>.ImageBase</h4><p>+0034h，双字。该字段指出了PE映像的优先装入地址。链接器在产生可执行文件的时候，是对应这个地址来生成机器码的。如果操作系统也是按照这个地址加载机器码到内存中，那么指令中的许多重定位信息就不需要修改了，这样运行速度就会更快一些。</p>
+<p>在链接的时候，可以使用参数”-base”来指定优先装入的地址，如果不指定，那么链接器默认装入EXE的地址就是0x00400000。而相对于DLL文件来说，它默认优先装入地址则是0x10000000。如果一个进程用到了多个DLL文件，其装入地址可能会发生冲突。PE加载器会调整其中的地址，使所有的DLL文件都能被正确装入。所以，不要错误地认为内存中动态链接库的基地址和其文件头字段IAMGE_OPTIONAL_HEADER32.ImageBase指定的完全一样。</p>
+<p>我们可以自己来定义这个值，但是第一，取值不能超出边界，即取的值必须在进程地址空间中；第二，该值必须是64KB的整数倍。</p>
+<h4 id="SectionAlignment和-FileAlignment"><a href="#SectionAlignment和-FileAlignment" class="headerlink" title=".SectionAlignment和.FileAlignment"></a>.SectionAlignment和.FileAlignment</h4><p>+0038h，双字。内存中节的对齐粒度</p>
+<p>内存中的数据存取以页面为单位。Win32的页面大小是4KB，所以Win32 PE中节的内存对齐粒度一般都选择4KB大小。十六进制表示为01000h。(和16位汇编要从偶地址取数道理类似)</p>
+<p>SectionAlignment必须大于或等于FileAlignment</p>
+<p>+003ch，双字。文件中节的对齐粒度，同样也是为了提高文件从磁盘加载的效率。</p>
+<p>Windows用来组织硬盘的所有文件系统都是基于簇（分配单元）的，每个簇包含几个物理扇区。扇区是磁盘物理存取的最小单位。簇越大，磁盘存储信息的容量就越大，但存取所花费的时间也越长。通常情况下，Windows会选择使用512字节的簇大小来格式化分区，最大可以达到4KB。</p>
+<h4 id="版本号相关字段"><a href="#版本号相关字段" class="headerlink" title="版本号相关字段"></a>版本号相关字段</h4><p>这部分字段相对不是很重要</p>
+<p>.MajorOperatingSystemVersion</p>
+<p>.MinorOperatingSystemVersion</p>
+<p>+0040h，两个单字，标识操作系统的主版本号和次版本号</p>
+<p>.MajorImageVersion</p>
+<p>.MinorImageVersion</p>
+<p>+0044h，两个字。PE文件映像的版本号。</p>
+<p>.MajorSubsystemVersion</p>
+<p>.MinorSubsystemVersion</p>
+<p>+0048h，两个字。运行所需子系统版本号</p>
+<p>.Win32VersionValue</p>
+<p>+004ch，双字，子系统版本。暂时未用，必须设置为0。</p>
+<h4 id="SizeOfImage和-SizeOfHeaders"><a href="#SizeOfImage和-SizeOfHeaders" class="headerlink" title=".SizeOfImage和.SizeOfHeaders"></a>.SizeOfImage和.SizeOfHeaders</h4><p>+0050h，双字。内存中整个PE文件的映射尺寸，可以比实际值大。按照1000h对齐。</p>
+<p>+0054h，双字。所有头+节表按照文件对齐粒度对齐后的大小（即含补足的0），按照200h对齐。</p>
+<h4 id="CheckSum"><a href="#CheckSum" class="headerlink" title=".CheckSum"></a>.CheckSum</h4><p>+0058h，双字。校验和，在大多数PE中，该值是0。在一些内核模式的驱动程序和系统DLL中，该值则是必须存在且是正确的。</p>
+<h4 id="Subsystem"><a href="#Subsystem" class="headerlink" title=".Subsystem"></a>.Subsystem</h4><p>+005ch，单字。指定使用界面的子系统。主要选择是GUI和CUI。</p>
+<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005501888.png" alt="image-20211215005501888"></p>
+<h4 id="DllCharacteristics"><a href="#DllCharacteristics" class="headerlink" title=".DllCharacteristics"></a>.DllCharacteristics</h4><p>+005eh，单字。DLL文件属性。是一个标志集，定义PE文件装载时的特性</p>
+<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005655365.png" alt="image-20211215005655365"></p>
+<h4 id="SizeOfStackReserve和-SizeOfStackCommit"><a href="#SizeOfStackReserve和-SizeOfStackCommit" class="headerlink" title=".SizeOfStackReserve和.SizeOfStackCommit"></a>.SizeOfStackReserve和.SizeOfStackCommit</h4><p>+0060h，双字，初始化时保留栈的大小。该字段表示为初始线程的栈而保留的虚拟内存数量，然而并不是留出的所有虚拟内存都可以做栈（真正的栈大小由下一个字段SizeOfStackCommit决定）。默认为0x100000。</p>
+<p>+0064h，双字，初始化时实际提交的栈大小。保证初始线程的栈实际占用内存空间的大小。默认是一页，1MB。</p>
+<h4 id="SizeOfHeapReserve和-SizeOfHeapCommit"><a href="#SizeOfHeapReserve和-SizeOfHeapCommit" class="headerlink" title=".SizeOfHeapReserve和.SizeOfHeapCommit"></a>.SizeOfHeapReserve和.SizeOfHeapCommit</h4><p>+0068h，双字。</p>
+<p>+006ch，双字。大体上和前面两个字段相似，这两个字段定义堆的大小。</p>
+<h4 id="LoaderFlags"><a href="#LoaderFlags" class="headerlink" title=".LoaderFlags"></a>.LoaderFlags</h4><p>+0070h，双字，加载标志。</p>
+<h4 id="NumberOfRvaAndSize和-DataDirectory"><a href="#NumberOfRvaAndSize和-DataDirectory" class="headerlink" title=".NumberOfRvaAndSize和.DataDirectory"></a>.NumberOfRvaAndSize和.DataDirectory</h4><p>一篇对.NumberOfRvaAndSize功能的研究：</p>
+<p><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-76032.htm">https://bbs.pediy.com/thread-76032.htm</a></p>
+<p>+0074h，双字，定义数据目录的数量。一般为16，具体数量由.SizeOfOptionalHeaders决定（这里有疑惑）。实际应用中可以取2～16的值。</p>
+<p>+0078h，结构。由16个IMAGE_DATA_DIRECTORY结构线性排列而成，用于定义PE中的16种不同类别的数据所在的位置和大小。</p>
+<h5 id="数据目录"><a href="#数据目录" class="headerlink" title="数据目录"></a>数据目录</h5><p>如上所说，一般会定义16种数据类型</p>
+<table>
+<thead>
+<tr>
+<th>类别编号</th>
+<th>名称</th>
+<th>所在节名称</th>
+<th>简介</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>导出数据</td>
+<td>.edata</td>
+<td>包含一些可被其他exe访问的符号相关信息，如资源和导出函数</td>
+</tr>
+<tr>
+<td>1</td>
+<td>导入数据</td>
+<td>.idata</td>
+<td>包含PE映像所有导入的符号</td>
+</tr>
+<tr>
+<td>2</td>
+<td>异常表数据</td>
+<td>.pdata</td>
+<td>该节是由用于异常处理的函数表项组成的数组</td>
+</tr>
+<tr>
+<td>3</td>
+<td>资源数据</td>
+<td>.rsrc</td>
+<td>多层的二叉排序树，节点指向各种资源。可以有2^31^层，经常使用类型层，名称层，语言代码层</td>
+</tr>
+<tr>
+<td>4</td>
+<td>属性证书数据</td>
+<td></td>
+<td>由一组连续的按八进制字（从任意字节边界开始的16个连续字节）边界对齐的属性证书表项组成，每个属性证书表项指向WIN_CERTIFICATE结构，验证PE文件是否被修改</td>
+</tr>
+<tr>
+<td>5</td>
+<td>基址重定位信息</td>
+<td>.reloc</td>
+<td>基址重定位表包含了映像中所有需要重定位的内容。</td>
+</tr>
+<tr>
+<td>6</td>
+<td>调试数据</td>
+<td>.debug</td>
+<td>指向IMAGE_DEBUG_DIRECTORY结构数组。其中的每个元素都描述了PE中的一些调试信息</td>
+</tr>
+<tr>
+<td>7</td>
+<td>预留</td>
+<td>0</td>
+<td>必须为0</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Global Ptr</td>
+<td></td>
+<td>存储在全局指针寄存器中的一个值。</td>
+</tr>
+<tr>
+<td>9</td>
+<td>线程本地存储数据</td>
+<td>.tls</td>
+<td>数据对象对应于运行相应代码的单个线程</td>
+</tr>
+<tr>
+<td>10</td>
+<td>加载配置信息</td>
+<td>包含保留的SEH技术</td>
+<td>提供安全的结构化异常处理程序列表，操作系统在进行异常处理时要用到这些异常处理程序</td>
+</tr>
+<tr>
+<td>11</td>
+<td>绑定导入数据</td>
+<td></td>
+<td>优化导入信息，由程序员或链接器代替Windows加载器完成了一部分对导入表的处理工作（在加载时）</td>
+</tr>
+<tr>
+<td>12</td>
+<td>IAT</td>
+<td></td>
+<td>导入表的一部分，这个双字数组里定义了所有导入函数的VA，程序可以直接通过跳转指令跳转到该VA处执行</td>
+</tr>
+<tr>
+<td>13</td>
+<td>延迟导入数据</td>
+<td></td>
+<td>为延迟加载提供统一的访问机制</td>
+</tr>
+<tr>
+<td>14</td>
+<td>CLR数据</td>
+<td>.cormeta</td>
+<td>.NET框架的一个重要组成部分，所有基于.NET框架开发的程序，其初始化部分都是通过访问这部分定义而实现的。PE加载时将通过该结构加载代码托管机制需要的所有动态链接库文件</td>
+</tr>
+<tr>
+<td>15</td>
+<td>预留</td>
+<td>未定义</td>
+<td>未定义</td>
+</tr>
+</tbody></table>
+<h2 id="PE体字段（节表项）"><a href="#PE体字段（节表项）" class="headerlink" title="PE体字段（节表项）"></a>PE体字段（节表项）</h2><h3 id="IMAGE-SECTION-HEADER"><a href="#IMAGE-SECTION-HEADER" class="headerlink" title="IMAGE_SECTION_HEADER"></a>IMAGE_SECTION_HEADER</h3><p>每个节表都有类似的结构完成节表的定义。</p>
+<h4 id="Name1"><a href="#Name1" class="headerlink" title=".Name1"></a>.Name1</h4><p>+0000h，8字节。一般以一个以“\0”结尾的ASCII来表示节的名称。</p>
+<h4 id="MISC"><a href="#MISC" class="headerlink" title=".MISC"></a>.MISC</h4><p>+0008h，双字。联合型的数据，这是节的数据在没有对齐前的真实尺寸，不过很多PE文件里该值并不准确。</p>
+<h4 id="VirtualAddress"><a href="#VirtualAddress" class="headerlink" title=".VirtualAddress"></a>.VirtualAddress</h4><p>+000ch，双字，节区的RVA。</p>
+<h4 id="SizeOfRawData"><a href="#SizeOfRawData" class="headerlink" title=".SizeOfRawData"></a>.SizeOfRawData</h4><p>+0010h，双字，节对齐后的尺寸，一般是200h。</p>
+<h4 id="PointerToRawData"><a href="#PointerToRawData" class="headerlink" title=".PointerToRawData"></a>.PointerToRawData</h4><p>+0014h，双字，节区其实数据在文件中的偏移。</p>
+<h4 id="PointerToRelocations"><a href="#PointerToRelocations" class="headerlink" title=".PointerToRelocations"></a>.PointerToRelocations</h4><p>+0018h，双字，“.obj”中使用，指向重定位表的指针</p>
+<h4 id="PointerToLinenumbers"><a href="#PointerToLinenumbers" class="headerlink" title=".PointerToLinenumbers"></a>.PointerToLinenumbers</h4><p>+001ch，双字，行号表的位置</p>
+<h4 id="NumberOfRelocations"><a href="#NumberOfRelocations" class="headerlink" title=".NumberOfRelocations"></a>.NumberOfRelocations</h4><p>+0020h，单字。重定位表的个数（在OBJ文件中使用）</p>
+<h4 id="NumberOfLinenumbers"><a href="#NumberOfLinenumbers" class="headerlink" title=".NumberOfLinenumbers"></a>.NumberOfLinenumbers</h4><p>+0022h，单字。行号表中行号的数量。</p>
+<h4 id="Characteristics-1"><a href="#Characteristics-1" class="headerlink" title=".Characteristics"></a>.Characteristics</h4><p>+0024h，双字。节的属性。这个字段很重要，这是节的属性标志字段。</p>
+<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215021048562.png" alt="image-20211215021048562"></p>
+<p>代码节的属性一般为60000020h，也就是可执行、可读和“节中包含代码”；数据节的属性一般为c0000040h，也就是可读、可写和“包含已初始化数据”；而常量节（对应源代码中的.const段）的属性为40000040h，也就是可读和“包含已初始化数据”；资源节的属性和常量节的属性一般是相同的。</p>
+<p>当然，节属性的定义不一定必须是这些值。比如，当PE文件被压缩工具压缩以后，包含代码的节往往被同时设置成具有可执行、可读和可写属性，因为解压部分需要将解压后的代码回写到代码段中。</p>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="">
+            </audio>
+            
+                <ul id="audio-list" style="display:none">
+                    
+                        
+                            <li title='0' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                        
+                            <li title='1' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                </ul>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+		data-enable='false'
+        data-ae='false'
+        data-ci='45f20068d0ff5ed5fccc'
+        data-cs='36072b1532a875a0fa8ef6960eec13035f4f7811'
+        data-r='sanyic.github.io'
+        data-o='sanyic'
+        data-a='sanyic'
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+        <div class='side'>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90"><span class="toc-number">1.</span> <span class="toc-text">PE字段解析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#PE%E5%A4%B4%E9%83%A8%E5%AD%97%E6%AE%B5"><span class="toc-number">1.1.</span> <span class="toc-text">PE头部字段</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Signature"><span class="toc-number">1.1.0.1.</span> <span class="toc-text">.Signature</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#FileHeader"><span class="toc-number">1.1.0.2.</span> <span class="toc-text">.FileHeader</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#OptionalHeader"><span class="toc-number">1.1.0.3.</span> <span class="toc-text">.OptionalHeader</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IMAGE-FILE-HEADER%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90"><span class="toc-number">1.1.1.</span> <span class="toc-text">IMAGE_FILE_HEADER字段解析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Machine"><span class="toc-number">1.1.1.1.</span> <span class="toc-text">.Machine</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#NumberOfSections"><span class="toc-number">1.1.1.2.</span> <span class="toc-text">.NumberOfSections</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TimeDataStamp"><span class="toc-number">1.1.1.3.</span> <span class="toc-text">.TimeDataStamp</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#PointerToSymbolTable"><span class="toc-number">1.1.1.4.</span> <span class="toc-text">.PointerToSymbolTable</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SizeOfOptionalHeader"><span class="toc-number">1.1.1.5.</span> <span class="toc-text">.SizeOfOptionalHeader</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Characteristics"><span class="toc-number">1.1.1.6.</span> <span class="toc-text">.Characteristics</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IMAGE-OPTIONAL-HEADER32"><span class="toc-number">1.1.2.</span> <span class="toc-text">IMAGE_OPTIONAL_HEADER32</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Magic"><span class="toc-number">1.1.2.1.</span> <span class="toc-text">.Magic</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MajorLinkerVersion%E5%92%8C-MinorLinkerVersion"><span class="toc-number">1.1.2.2.</span> <span class="toc-text">.MajorLinkerVersion和.MinorLinkerVersion</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SizeOfCode"><span class="toc-number">1.1.2.3.</span> <span class="toc-text">.SizeOfCode</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SizeOfInitializedData%E5%92%8C-SizeOfUninitializedData"><span class="toc-number">1.1.2.4.</span> <span class="toc-text">.SizeOfInitializedData和.SizeOfUninitializedData</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#AddressOfEntryPoint"><span class="toc-number">1.1.2.5.</span> <span class="toc-text">.AddressOfEntryPoint</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#BaseOfCode%E5%92%8C-BaseOfData"><span class="toc-number">1.1.2.6.</span> <span class="toc-text">.BaseOfCode和.BaseOfData</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ImageBase"><span class="toc-number">1.1.2.7.</span> <span class="toc-text">.ImageBase</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SectionAlignment%E5%92%8C-FileAlignment"><span class="toc-number">1.1.2.8.</span> <span class="toc-text">.SectionAlignment和.FileAlignment</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E5%8F%B7%E7%9B%B8%E5%85%B3%E5%AD%97%E6%AE%B5"><span class="toc-number">1.1.2.9.</span> <span class="toc-text">版本号相关字段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SizeOfImage%E5%92%8C-SizeOfHeaders"><span class="toc-number">1.1.2.10.</span> <span class="toc-text">.SizeOfImage和.SizeOfHeaders</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#CheckSum"><span class="toc-number">1.1.2.11.</span> <span class="toc-text">.CheckSum</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Subsystem"><span class="toc-number">1.1.2.12.</span> <span class="toc-text">.Subsystem</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#DllCharacteristics"><span class="toc-number">1.1.2.13.</span> <span class="toc-text">.DllCharacteristics</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SizeOfStackReserve%E5%92%8C-SizeOfStackCommit"><span class="toc-number">1.1.2.14.</span> <span class="toc-text">.SizeOfStackReserve和.SizeOfStackCommit</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SizeOfHeapReserve%E5%92%8C-SizeOfHeapCommit"><span class="toc-number">1.1.2.15.</span> <span class="toc-text">.SizeOfHeapReserve和.SizeOfHeapCommit</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#LoaderFlags"><span class="toc-number">1.1.2.16.</span> <span class="toc-text">.LoaderFlags</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#NumberOfRvaAndSize%E5%92%8C-DataDirectory"><span class="toc-number">1.1.2.17.</span> <span class="toc-text">.NumberOfRvaAndSize和.DataDirectory</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E7%9B%AE%E5%BD%95"><span class="toc-number">1.1.2.17.1.</span> <span class="toc-text">数据目录</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PE%E4%BD%93%E5%AD%97%E6%AE%B5%EF%BC%88%E8%8A%82%E8%A1%A8%E9%A1%B9%EF%BC%89"><span class="toc-number">1.2.</span> <span class="toc-text">PE体字段（节表项）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#IMAGE-SECTION-HEADER"><span class="toc-number">1.2.1.</span> <span class="toc-text">IMAGE_SECTION_HEADER</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Name1"><span class="toc-number">1.2.1.1.</span> <span class="toc-text">.Name1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MISC"><span class="toc-number">1.2.1.2.</span> <span class="toc-text">.MISC</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#VirtualAddress"><span class="toc-number">1.2.1.3.</span> <span class="toc-text">.VirtualAddress</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SizeOfRawData"><span class="toc-number">1.2.1.4.</span> <span class="toc-text">.SizeOfRawData</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#PointerToRawData"><span class="toc-number">1.2.1.5.</span> <span class="toc-text">.PointerToRawData</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#PointerToRelocations"><span class="toc-number">1.2.1.6.</span> <span class="toc-text">.PointerToRelocations</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#PointerToLinenumbers"><span class="toc-number">1.2.1.7.</span> <span class="toc-text">.PointerToLinenumbers</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#NumberOfRelocations"><span class="toc-number">1.2.1.8.</span> <span class="toc-text">.NumberOfRelocations</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#NumberOfLinenumbers"><span class="toc-number">1.2.1.9.</span> <span class="toc-text">.NumberOfLinenumbers</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Characteristics-1"><span class="toc-number">1.2.1.10.</span> <span class="toc-text">.Characteristics</span></a></li></ol></li></ol></li></ol></li></ol>	
+        </div>
+    
+</div>
+
+
+    </div>
+</div>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/z16.model.json"},"display":{"position":"right","width":250,"height":400},"mobile":{"show":true},"log":false});</script></body>
+
+
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/typed.js"></script>
+<script src="/js/diaspora.js"></script>
+
+
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+
+
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    });
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+
+<!-- Google Analytics -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=/"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '/');
+</script>
+<!-- End Google Analytics -->
+
+
+</html>

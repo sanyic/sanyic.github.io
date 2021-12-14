@@ -269,6 +269,7 @@
 <h3 id="浮点运算"><a href="#浮点运算" class="headerlink" title="浮点运算"></a>浮点运算</h3><p>​        浮点数的运算和整数运算大体相似，但最后的结果会根据所需的精度要求进行向偶数舍入。但最大的区别在于浮点数不具备结合性和交换性。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(<span class="number">3.14</span>+<span class="number">1E10</span>) - <span class="number">1E10</span> = <span class="number">0.0</span></span><br><span class="line"><span class="number">3.14</span> + (<span class="number">1E10</span><span class="number">-1E10</span>) = <span class="number">3.14</span></span><br><span class="line">(<span class="number">1E10</span>*<span class="number">1E10</span>)*<span class="number">1E-20</span> = +∞</span><br><span class="line"><span class="number">1E20</span>*(<span class="number">1E20</span>*<span class="number">1E-20</span>) = <span class="number">1E20</span></span><br></pre></td></tr></table></figure>
 
+
             <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
             <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
                 <source type="audio/mpeg" src="">
@@ -377,6 +378,25 @@
 </div>
 
 
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    });
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 
 
