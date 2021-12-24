@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html lang="“zh-CN”" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DataLab - sanyicの博客</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="sanyic,"> 
+    <meta name="description" content="sanyic,Data Lab用!  ̃ &amp;amp; ˆ | + &amp;lt;&amp;lt; &amp;gt;&amp;gt;实现下列函数
+
+中文的题干
+
+bitXor(x,y)123int bitxor(int m,int n) &amp;#1,"> 
+    <meta name="author" content="sanyic"> 
+    <link rel="alternative" href="atom.xml" title="sanyicの博客" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.ico"> 
+    
+    
+<link rel="stylesheet" href="/css/diaspora.css">
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body class="loading">
+    <span id="config-title" style="display:none">sanyicの博客</span>
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="iconfont icon-home image-icon" href="javascript:;" data-url="https://sanyic.github.io"></a>
+    <div title="播放/暂停" class="iconfont icon-play"></div>
+    <h3 class="subtitle">DataLab</h3>
+    <div class="social">
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="iconfont icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">DataLab</h1>
+        <div class="stuff">
+            <span>十二月 15, 2021</span>
+            
+  <ul class="post-tags-list" itemprop="keywords"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/%E4%BD%8D%E8%BF%90%E7%AE%97/" rel="tag">位运算</a></li></ul>
+
+
+        </div>
+        <div class="content markdown">
+            <h1 id="Data-Lab"><a href="#Data-Lab" class="headerlink" title="Data Lab"></a>Data Lab</h1><p>用!  ̃ &amp; ˆ | + &lt;&lt; &gt;&gt;实现下列函数</p>
+<p><img src="/2021/12/15/CSAPP-Lab/DataLab/DataLab%5Cimage-20211220133136361.png" alt="image-20211220133136361"></p>
+<p>中文的题干</p>
+<p><img src="/2021/12/15/CSAPP-Lab/DataLab/DataLab%5Cimage-20211220163157477.png" alt="image-20211220163157477"></p>
+<h2 id="bitXor-x-y"><a href="#bitXor-x-y" class="headerlink" title="bitXor(x,y)"></a>bitXor(x,y)</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">bitxor</span><span class="params">(<span class="keyword">int</span> m,<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> ~(m &amp; n)&amp;~(~m &amp; ~n);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>本来没想明白，后来想从集合的角度看一下，发现^在集合表示中叫离散差。表示如下：</p>
+<p><img src="/2021/12/15/CSAPP-Lab/DataLab/DataLab%5Cimage-20211220170658367.png" alt="image-20211220170658367"></p>
+<h2 id="tmin"><a href="#tmin" class="headerlink" title="tmin()"></a>tmin()</h2><p>返回int的最小值</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">tmin</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0x1</span> &lt;&lt; <span class="number">31</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于补码的首位有很高的负权，其他都是正权，int是32位</p>
+<p>构造出0x10000000000000000000000000000000。</p>
+<h2 id="isTmax（x）"><a href="#isTmax（x）" class="headerlink" title="isTmax（x）"></a>isTmax（x）</h2><p>判断参数是否是补码的最大值</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">isTmax</span><span class="params">(<span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> !(~(<span class="number">0x1</span> &lt;&lt; <span class="number">31</span>) ^ x);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>用到了上一个题目的知识，~取得最大值，用^判断是否相等。</p>
+<p>网上找到了另一个版本</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">isTmax</span><span class="params">(<span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">int</span> i = x + <span class="number">1</span>;<span class="comment">//Tmin,1000...</span></span><br><span class="line">	x = x + i;<span class="comment">//-1,1111...</span></span><br><span class="line">	x = ~x;<span class="comment">//0,0000...</span></span><br><span class="line">	i = !i;<span class="comment">//exclude x=0xffff...</span></span><br><span class="line">	x = x + i;<span class="comment">//exclude x=0xffff...</span></span><br><span class="line">	<span class="keyword">return</span> !x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="allOddBits-x"><a href="#allOddBits-x" class="headerlink" title="allOddBits(x)"></a>allOddBits(x)</h2><p>判断所有奇数位是否都为1，这里的奇数指的是位的阶级是2的几次幂.。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">allOddBits</span><span class="params">(<span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> !(<span class="number">0xAAAA</span> ^ x);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>考虑掩码用0xAAAA可以得到各个奇数位上为1的掩码用&amp;，^等运算都能表示出来。</p>
+<h2 id="negate-x"><a href="#negate-x" class="headerlink" title="negate(x)"></a>negate(x)</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">negate</span><span class="params">(<span class="keyword">int</span> x)</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> ~x+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>补码等于取反+1</p>
+<h2 id="isAsciiDigit-x"><a href="#isAsciiDigit-x" class="headerlink" title="isAsciiDigit(x)"></a>isAsciiDigit(x)</h2><p>计算输入值是否是数字 0-9 的 ASCII值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">isAsciiDigit</span><span class="params">(<span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">int</span> sign,upperBound,lowerBound;</span><br><span class="line">	sign = <span class="number">0x1</span> &lt;&lt; <span class="number">31</span>;</span><br><span class="line">	upperBound = ~(sign | <span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(<span class="string">&#x27;9&#x27;</span>));<span class="comment">//构造一个差0x39溢出的数字</span></span><br><span class="line">	lowerBound = ~<span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(<span class="string">&#x27;0&#x27;</span>) + <span class="number">1</span>;<span class="comment">//构造一个差0x30溢出的数字</span></span><br><span class="line">	upperBound = sign &amp; (upperBound + x) &gt;&gt; <span class="number">31</span>;</span><br><span class="line">	lowerBound = sign &amp; (lowerBound + x) &gt;&gt; <span class="number">31</span>;</span><br><span class="line">	<span class="keyword">return</span>  !(upperBound | lowerBound);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>参考的思路是找到两个特殊的边界数值再<strong>利用sign的符号位</strong>来进行判断。</p>
+<h2 id="conditional-x-y-z"><a href="#conditional-x-y-z" class="headerlink" title="conditional(x, y, z)"></a>conditional(x, y, z)</h2><p>位运算模拟三目运算<code>x?y:z</code> </p>
+<p>用条件分支来说类似于下面</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(x)</span><br><span class="line">    <span class="keyword">return</span> y;</span><br><span class="line"><span class="keyword">else</span> </span><br><span class="line">    <span class="keyword">return</span> z;</span><br></pre></td></tr></table></figure>
+
+<p>但这里我们不能用条件分支，需要在一个表达式结合两个结果</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">conditional</span> <span class="params">(<span class="keyword">int</span> x,<span class="keyword">int</span> y,<span class="keyword">int</span> z)</span></span>&#123;</span><br><span class="line">    x = !!x;</span><br><span class="line">    x = ~x + <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> (x&amp;y)|((~(!x)+<span class="number">1</span>)&amp;z);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="isLessOrEqual-x-y"><a href="#isLessOrEqual-x-y" class="headerlink" title="isLessOrEqual(x,y)"></a>isLessOrEqual(x,y)</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">isLessOrEqual</span><span class="params">(<span class="keyword">int</span> x, <span class="keyword">int</span> y)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> result = x + (~y + <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> !!((!result) | (result &amp; (<span class="number">1</span>&lt;&lt;<span class="number">31</span>)));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">isLessOrEqual</span><span class="params">(<span class="keyword">int</span> x, <span class="keyword">int</span> y)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> result = x + (~y + <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> !!((!result) | (result &gt;&gt;<span class="number">31</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="logicalNeg-x"><a href="#logicalNeg-x" class="headerlink" title="logicalNeg(x)"></a>logicalNeg(x)</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">logicalNeg</span><span class="params">(<span class="keyword">int</span> x)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> (((<span class="keyword">unsigned</span> <span class="keyword">int</span>)x &gt;&gt;<span class="number">31</span>)^ <span class="number">1</span>)&amp;((<span class="keyword">unsigned</span> <span class="keyword">int</span>)(~x+<span class="number">1</span>)&gt;&gt;<span class="number">31</span> ^<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="howManyBits-x"><a href="#howManyBits-x" class="headerlink" title="howManyBits(x)"></a>howManyBits(x)</h2><h2 id="floatFloatScale2-uf"><a href="#floatFloatScale2-uf" class="headerlink" title="floatFloatScale2(uf)"></a>floatFloatScale2(uf)</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">unsigned</span> <span class="keyword">int</span> <span class="title">floatFloatScale2</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">int</span> uf)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> sign = uf &gt;&gt; <span class="number">31</span>&amp; <span class="number">0x1</span>;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> <span class="built_in">exp</span> = (uf &amp; <span class="number">0x7f800000</span>) &gt;&gt; <span class="number">23</span>;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> frac = uf &amp; <span class="number">0x7ffff</span>;</span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">exp</span> == <span class="number">255</span>)</span><br><span class="line">		<span class="keyword">return</span> uf;</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">exp</span> == <span class="number">0</span>)</span><br><span class="line">		frac &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		<span class="built_in">exp</span> += <span class="number">1</span>;</span><br><span class="line">	<span class="keyword">return</span> frac | (sign &lt;&lt; <span class="number">31</span>) | (<span class="built_in">exp</span> &lt;&lt; <span class="number">23</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="floatFloat2Int-uf"><a href="#floatFloat2Int-uf" class="headerlink" title="floatFloat2Int(uf)"></a>floatFloat2Int(uf)</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">floatFloat2Int</span><span class="params">(<span class="keyword">unsigned</span> uf)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> <span class="built_in">exp</span> = (uf &amp; <span class="number">0x7f800000</span>) &gt;&gt; <span class="number">23</span>;</span><br><span class="line">	<span class="keyword">int</span> sign = (uf &gt;&gt; <span class="number">31</span>);</span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> frac = (uf &amp; <span class="number">0x7ffff</span>);</span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">exp</span> &lt; <span class="number">127</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">exp</span> &gt; <span class="number">158</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0x80000000</span>u;</span><br><span class="line">	<span class="keyword">else</span> &#123;</span><br><span class="line">		frac = frac | <span class="number">1</span> &lt;&lt; <span class="number">23</span>;</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">exp</span> &lt; <span class="number">150</span>)</span><br><span class="line">			frac &gt;&gt;= (<span class="number">150</span> - <span class="built_in">exp</span>);</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			frac &lt;&lt;= (<span class="built_in">exp</span> - <span class="number">150</span>);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> frac | (sign &lt;&lt; <span class="number">31</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="floatPower2"><a href="#floatPower2" class="headerlink" title="floatPower2()"></a>floatPower2()</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">unsigned</span> <span class="title">floatpower2</span><span class="params">(<span class="keyword">int</span> x)</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> e = x +<span class="number">127</span>;</span><br><span class="line">    <span class="keyword">if</span>(e &gt;= <span class="number">0xFF</span>) <span class="keyword">return</span> <span class="number">0x80000000</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(e &lt;= <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> e &lt;&lt;<span class="number">23</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="">
+            </audio>
+            
+                <ul id="audio-list" style="display:none">
+                    
+                        
+                            <li title='0' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                        
+                            <li title='1' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                </ul>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+		data-enable='false'
+        data-ae='false'
+        data-ci='45f20068d0ff5ed5fccc'
+        data-cs='36072b1532a875a0fa8ef6960eec13035f4f7811'
+        data-r='sanyic.github.io'
+        data-o='sanyic'
+        data-a='sanyic'
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+        <div class='side'>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Data-Lab"><span class="toc-number">1.</span> <span class="toc-text">Data Lab</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#bitXor-x-y"><span class="toc-number">1.1.</span> <span class="toc-text">bitXor(x,y)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tmin"><span class="toc-number">1.2.</span> <span class="toc-text">tmin()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#isTmax%EF%BC%88x%EF%BC%89"><span class="toc-number">1.3.</span> <span class="toc-text">isTmax（x）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#allOddBits-x"><span class="toc-number">1.4.</span> <span class="toc-text">allOddBits(x)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#negate-x"><span class="toc-number">1.5.</span> <span class="toc-text">negate(x)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#isAsciiDigit-x"><span class="toc-number">1.6.</span> <span class="toc-text">isAsciiDigit(x)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#conditional-x-y-z"><span class="toc-number">1.7.</span> <span class="toc-text">conditional(x, y, z)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#isLessOrEqual-x-y"><span class="toc-number">1.8.</span> <span class="toc-text">isLessOrEqual(x,y)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#logicalNeg-x"><span class="toc-number">1.9.</span> <span class="toc-text">logicalNeg(x)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#howManyBits-x"><span class="toc-number">1.10.</span> <span class="toc-text">howManyBits(x)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#floatFloatScale2-uf"><span class="toc-number">1.11.</span> <span class="toc-text">floatFloatScale2(uf)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#floatFloat2Int-uf"><span class="toc-number">1.12.</span> <span class="toc-text">floatFloat2Int(uf)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#floatPower2"><span class="toc-number">1.13.</span> <span class="toc-text">floatPower2()</span></a></li></ol></li></ol>	
+        </div>
+    
+</div>
+
+
+    </div>
+</div>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/z16.model.json"},"display":{"position":"right","width":250,"height":400},"mobile":{"show":true},"log":false});</script></body>
+
+
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/typed.js"></script>
+<script src="/js/diaspora.js"></script>
+
+
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+
+
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    });
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+
+<!-- Google Analytics -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=/"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '/');
+</script>
+<!-- End Google Analytics -->
+
+
+</html>
