@@ -85,40 +85,40 @@ PE一般指PE32,64位的可执行文件称为PE+或PE32+,">
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">IMAGE_LOAD_CONFIG_DIRECTORY STRUCT</span><br><span class="line"></span><br><span class="line">Characteristics dd ? ;0000h-加载配置属性，一般为48h</span><br><span class="line"></span><br><span class="line">......</span><br><span class="line"></span><br><span class="line">SecurityCookie dd ?</span><br><span class="line"></span><br><span class="line">SEHandlerTable dd ? ;0040h-指向安全SEH异常处理函数列表</span><br><span class="line"></span><br><span class="line">SEHandlerCount dd ? ;0044h-列表中安全Handler的个数</span><br><span class="line"></span><br><span class="line">IMAGE_LOAD_CONFIG_DIRECTORY ENDS</span><br></pre></td></tr></table></figure>
 
 <p>在这个结构体中，SEHandlerTable指向一个地址数组，该地址数组的个数由SEHandlerCount代替。地址的每一个值都是一个RVA（相对虚拟内存地址），RVA指向了结构化异常处理函数字节码。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214012155322.png" alt="image-20211214012155322"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214012155322.png" alt="image-20211214012155322"></p>
 <h2 id="PE文件格式"><a href="#PE文件格式" class="headerlink" title="PE文件格式"></a>PE文件格式</h2><h3 id="16位"><a href="#16位" class="headerlink" title="16位"></a>16位</h3><p>PE经历了从16位到32位的过渡，32位的PE文件都可以在16位系统兼容，然而两者结构的划分却不一致。</p>
 <p>在16位系统下，PE结构可以大致划分为两部分：DOS头和冗余数据。DOS头可以划分为DOS MZ头和DOS Stub指令码</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214022748812.png" alt="image-20211214022748812"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214022748812.png" alt="image-20211214022748812"></p>
 <p>DOS MZ头的定义如下</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214022912900.png" alt="image-20211214022912900"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214022912900.png" alt="image-20211214022912900"></p>
 <p>加粗部分在16位系统下是没有定义的。</p>
 <p>DOS Stub部分是该程序在DOS系统下运行的指令字节码。它的长度是不固定的，也导致了DOS头的长度不固定。</p>
-<p>拿notepad.exe举例<img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214023944837.png" alt="image-20211214023944837"></p>
-<p>反汇编后可以看出DOS Stub的功能，这里是打印出字符串，我们可以通过更改DOS头来给PE文件修改和添加功能。<img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214024135021.png" alt="image-20211214024135021"></p>
+<p>拿notepad.exe举例<img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214023944837.png" alt="image-20211214023944837"></p>
+<p>反汇编后可以看出DOS Stub的功能，这里是打印出字符串，我们可以通过更改DOS头来给PE文件修改和添加功能。<img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214024135021.png" alt="image-20211214024135021"></p>
 <h3 id="32位"><a href="#32位" class="headerlink" title="32位"></a>32位</h3><p>在32位的PE中，DOS头反而冗余数据（不参与运行）。但是DOS MZ 在32位PE也是必须的。因为在DOS MZ头中有一个字段非常重要，即IMAGE_DOS_HEADER.e_lfanew，没有它操作系统就定位不到标准的PE头部，可执行程序也就会被操作系统认为是非法的PE映像。</p>
 <p>由于DOS头的长度不固定，e_lfanew显得格外有意义，该字段的值是一个相对偏移量和DOS MZ的基地址一起定位PE的起始位置。</p>
 <p><code>PE_start=DOS MZ基地址+IMAGE_DOS_HEADER.e_lfanew</code></p>
 <p>32位下PE基本格式如下</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214031117324.png" alt="image-20211214031117324"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214031117324.png" alt="image-20211214031117324"></p>
 <p>DOS MZ头，DOS Stub，PE头，节表，四个部分组成了PE头部内容。节内容组成PE体内容，导入表、导出表、资源表、重定位表都在节内容中组织起来。</p>
 <p>DOS MZ头的大小是64个字节，在数据目录表项为16时，PE头的大小是456个字节，具体大小由IMAGE_FILE_HEADER.SizeOfOptionalHeader决定。</p>
 <p>节表，DOS Stub，和节内容的大小都是不固定的。其中，节表的不固定取决于节数目的不固定。每个节的描述信息则是个40字节的固定值，节表大小等于节的数量×40。节的数量由IMAGE_FILE_HEADER.NumberOfSections来定义。</p>
 <h2 id="PE文件头部解析"><a href="#PE文件头部解析" class="headerlink" title="PE文件头部解析"></a>PE文件头部解析</h2><h3 id="DOS头"><a href="#DOS头" class="headerlink" title="DOS头"></a>DOS头</h3><p>如上所说，DOS头分为DOS MZ头IMAGE_DOS_HEADER和DOS Stub。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214031647456.png" alt="image-20211214031647456"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214031647456.png" alt="image-20211214031647456"></p>
 <p>DOS MZ头下面是DOS Stub，其内容随着链接所用的链接器不同而不同，PE没有对应的结构体。</p>
 <h3 id="PE头"><a href="#PE头" class="headerlink" title="PE头"></a>PE头</h3><p>PE头IMAGE_NT_HEADERS</p>
 <p>广义上的PE头，在标准的PE文件中其大小为456个字节</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214033711784.png" alt="image-20211214033711784"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214033711784.png" alt="image-20211214033711784"></p>
 <h4 id="PE头标识"><a href="#PE头标识" class="headerlink" title="PE头标识"></a>PE头标识</h4><p>PE头标识Signature</p>
 <p>紧随着DOS Stub之后，IMAGE_DOS_HEADER.e_lfanew指向的PE_start，内容固定为00 00 45 50</p>
 <h4 id="标准PE头"><a href="#标准PE头" class="headerlink" title="标准PE头"></a>标准PE头</h4><p>标准PE头IMAGE_FILE_HEADER，微软官方文档称为COFF头（标准通用对象文件格式），用20个字节记录了PE的全局属性。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214032956696.png" alt="image-20211214032956696"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214032956696.png" alt="image-20211214032956696"></p>
 <blockquote>
 <p>注释后的偏移基于IMAGE_NT_HEADERS头</p>
 </blockquote>
 <p>该结构常用于判断PE文件是EXE类型还是DLL类型，不但可以通过该结构得到PE文件中节的总量，还可以当成对节区信息进行遍历操作时的循环次数。</p>
 <h4 id="拓展PE头"><a href="#拓展PE头" class="headerlink" title="拓展PE头"></a>拓展PE头</h4><p>扩展PE头IMAGE_OPTIONAL_HEADER32</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214033237547.png" alt="image-20211214033237547"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214033237547.png" alt="image-20211214033237547"></p>
 <blockquote>
 <p>注释后的偏移基于IMAGE_NT_HEADERS头</p>
 </blockquote>
@@ -126,9 +126,9 @@ PE一般指PE32,64位的可执行文件称为PE+或PE32+,">
 <h5 id="数据目录"><a href="#数据目录" class="headerlink" title="数据目录"></a>数据目录</h5><p>数据目录项IMAGE_DATA_DIRECTORY</p>
 <p>IMAGE_OPTIONAL_HEADER32（扩展PE头）的最后一个字段，该字段定义了PE文件中出现的所有不同类型的数据的目录信息。如前所述，应用程序中的数据被按照用途分成很多种类，如导出表、导入表、资源、重定位表等，该结构就是用来描述这些不同类别的数据在文件（和内存）中的位置及大小。</p>
 <p>数据目录定义了16中数据类型</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214034742543.png" alt="image-20211214034742543"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214034742543.png" alt="image-20211214034742543"></p>
 <p>PE中使用了一种称作“数据目录项IMAGE_DATA_DIRECTORY”的数据结构来定义每种数据。该结构只有两个字段。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214034836204.png" alt="image-20211214034836204"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214034836204.png" alt="image-20211214034836204"></p>
 <blockquote>
 <p>偏移基于IMAGE_NT_HEADERS头</p>
 </blockquote>
@@ -136,7 +136,7 @@ PE一般指PE32,64位的可执行文件称为PE+或PE32+,">
 <p>该数据目录的重要性体现在寻找特定类型的数据，如果查看PE中调用的DLL的函数，则需要从数据目录表的第2个元素获取导入表起始位置和大小，在根据VirtualAddress_1找到导入表字节码。</p>
 <h4 id="节表项"><a href="#节表项" class="headerlink" title="节表项"></a>节表项</h4><p>节表项IMAGE_SECTION_HEADER</p>
 <p>紧随在PE头后，每个节表项记录了PE中与某个特定的节有关的信息，如节的属性、节的大小、在文件和内存中的起始位置等。节表中节的数量由字段IMAGE_FILE_HEADER.NumberOfSections（标准PE头）来定义。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214035717069.png" alt="image-20211214035717069"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214035717069.png" alt="image-20211214035717069"></p>
 <blockquote>
 <p>偏移是基于IMAGE_SECTION_HEADER头</p>
 </blockquote>

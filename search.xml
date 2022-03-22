@@ -64,7 +64,7 @@
   </entry>
   <entry>
     <title>PE格式</title>
-    <url>/2021/12/14/Windows-PE/PE/</url>
+    <url>/2021/12/14/Windows/PE/</url>
     <content><![CDATA[<h1 id="PE基本介绍"><a href="#PE基本介绍" class="headerlink" title="PE基本介绍"></a>PE基本介绍</h1><p>PE（Portable Executable）可移植可执行文件，在COFF格式的基础上制作来。提高程序在不同平台的可移植性。</p>
 <p>PE一般指PE32,64位的可执行文件称为PE+或PE32+。</p>
 <h2 id="PE文件种类"><a href="#PE文件种类" class="headerlink" title="PE文件种类"></a>PE文件种类</h2><table>
@@ -97,40 +97,40 @@
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">IMAGE_LOAD_CONFIG_DIRECTORY STRUCT</span><br><span class="line"></span><br><span class="line">Characteristics dd ? ;0000h-加载配置属性，一般为48h</span><br><span class="line"></span><br><span class="line">......</span><br><span class="line"></span><br><span class="line">SecurityCookie dd ?</span><br><span class="line"></span><br><span class="line">SEHandlerTable dd ? ;0040h-指向安全SEH异常处理函数列表</span><br><span class="line"></span><br><span class="line">SEHandlerCount dd ? ;0044h-列表中安全Handler的个数</span><br><span class="line"></span><br><span class="line">IMAGE_LOAD_CONFIG_DIRECTORY ENDS</span><br></pre></td></tr></table></figure>
 
 <p>在这个结构体中，SEHandlerTable指向一个地址数组，该地址数组的个数由SEHandlerCount代替。地址的每一个值都是一个RVA（相对虚拟内存地址），RVA指向了结构化异常处理函数字节码。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214012155322.png" alt="image-20211214012155322"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214012155322.png" alt="image-20211214012155322"></p>
 <h2 id="PE文件格式"><a href="#PE文件格式" class="headerlink" title="PE文件格式"></a>PE文件格式</h2><h3 id="16位"><a href="#16位" class="headerlink" title="16位"></a>16位</h3><p>PE经历了从16位到32位的过渡，32位的PE文件都可以在16位系统兼容，然而两者结构的划分却不一致。</p>
 <p>在16位系统下，PE结构可以大致划分为两部分：DOS头和冗余数据。DOS头可以划分为DOS MZ头和DOS Stub指令码</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214022748812.png" alt="image-20211214022748812"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214022748812.png" alt="image-20211214022748812"></p>
 <p>DOS MZ头的定义如下</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214022912900.png" alt="image-20211214022912900"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214022912900.png" alt="image-20211214022912900"></p>
 <p>加粗部分在16位系统下是没有定义的。</p>
 <p>DOS Stub部分是该程序在DOS系统下运行的指令字节码。它的长度是不固定的，也导致了DOS头的长度不固定。</p>
-<p>拿notepad.exe举例<img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214023944837.png" alt="image-20211214023944837"></p>
-<p>反汇编后可以看出DOS Stub的功能，这里是打印出字符串，我们可以通过更改DOS头来给PE文件修改和添加功能。<img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214024135021.png" alt="image-20211214024135021"></p>
+<p>拿notepad.exe举例<img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214023944837.png" alt="image-20211214023944837"></p>
+<p>反汇编后可以看出DOS Stub的功能，这里是打印出字符串，我们可以通过更改DOS头来给PE文件修改和添加功能。<img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214024135021.png" alt="image-20211214024135021"></p>
 <h3 id="32位"><a href="#32位" class="headerlink" title="32位"></a>32位</h3><p>在32位的PE中，DOS头反而冗余数据（不参与运行）。但是DOS MZ 在32位PE也是必须的。因为在DOS MZ头中有一个字段非常重要，即IMAGE_DOS_HEADER.e_lfanew，没有它操作系统就定位不到标准的PE头部，可执行程序也就会被操作系统认为是非法的PE映像。</p>
 <p>由于DOS头的长度不固定，e_lfanew显得格外有意义，该字段的值是一个相对偏移量和DOS MZ的基地址一起定位PE的起始位置。</p>
 <p><code>PE_start=DOS MZ基地址+IMAGE_DOS_HEADER.e_lfanew</code></p>
 <p>32位下PE基本格式如下</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214031117324.png" alt="image-20211214031117324"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214031117324.png" alt="image-20211214031117324"></p>
 <p>DOS MZ头，DOS Stub，PE头，节表，四个部分组成了PE头部内容。节内容组成PE体内容，导入表、导出表、资源表、重定位表都在节内容中组织起来。</p>
 <p>DOS MZ头的大小是64个字节，在数据目录表项为16时，PE头的大小是456个字节，具体大小由IMAGE_FILE_HEADER.SizeOfOptionalHeader决定。</p>
 <p>节表，DOS Stub，和节内容的大小都是不固定的。其中，节表的不固定取决于节数目的不固定。每个节的描述信息则是个40字节的固定值，节表大小等于节的数量×40。节的数量由IMAGE_FILE_HEADER.NumberOfSections来定义。</p>
 <h2 id="PE文件头部解析"><a href="#PE文件头部解析" class="headerlink" title="PE文件头部解析"></a>PE文件头部解析</h2><h3 id="DOS头"><a href="#DOS头" class="headerlink" title="DOS头"></a>DOS头</h3><p>如上所说，DOS头分为DOS MZ头IMAGE_DOS_HEADER和DOS Stub。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214031647456.png" alt="image-20211214031647456"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214031647456.png" alt="image-20211214031647456"></p>
 <p>DOS MZ头下面是DOS Stub，其内容随着链接所用的链接器不同而不同，PE没有对应的结构体。</p>
 <h3 id="PE头"><a href="#PE头" class="headerlink" title="PE头"></a>PE头</h3><p>PE头IMAGE_NT_HEADERS</p>
 <p>广义上的PE头，在标准的PE文件中其大小为456个字节</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214033711784.png" alt="image-20211214033711784"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214033711784.png" alt="image-20211214033711784"></p>
 <h4 id="PE头标识"><a href="#PE头标识" class="headerlink" title="PE头标识"></a>PE头标识</h4><p>PE头标识Signature</p>
 <p>紧随着DOS Stub之后，IMAGE_DOS_HEADER.e_lfanew指向的PE_start，内容固定为00 00 45 50</p>
 <h4 id="标准PE头"><a href="#标准PE头" class="headerlink" title="标准PE头"></a>标准PE头</h4><p>标准PE头IMAGE_FILE_HEADER，微软官方文档称为COFF头（标准通用对象文件格式），用20个字节记录了PE的全局属性。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214032956696.png" alt="image-20211214032956696"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214032956696.png" alt="image-20211214032956696"></p>
 <blockquote>
 <p>注释后的偏移基于IMAGE_NT_HEADERS头</p>
 </blockquote>
 <p>该结构常用于判断PE文件是EXE类型还是DLL类型，不但可以通过该结构得到PE文件中节的总量，还可以当成对节区信息进行遍历操作时的循环次数。</p>
 <h4 id="拓展PE头"><a href="#拓展PE头" class="headerlink" title="拓展PE头"></a>拓展PE头</h4><p>扩展PE头IMAGE_OPTIONAL_HEADER32</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214033237547.png" alt="image-20211214033237547"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214033237547.png" alt="image-20211214033237547"></p>
 <blockquote>
 <p>注释后的偏移基于IMAGE_NT_HEADERS头</p>
 </blockquote>
@@ -138,9 +138,9 @@
 <h5 id="数据目录"><a href="#数据目录" class="headerlink" title="数据目录"></a>数据目录</h5><p>数据目录项IMAGE_DATA_DIRECTORY</p>
 <p>IMAGE_OPTIONAL_HEADER32（扩展PE头）的最后一个字段，该字段定义了PE文件中出现的所有不同类型的数据的目录信息。如前所述，应用程序中的数据被按照用途分成很多种类，如导出表、导入表、资源、重定位表等，该结构就是用来描述这些不同类别的数据在文件（和内存）中的位置及大小。</p>
 <p>数据目录定义了16中数据类型</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214034742543.png" alt="image-20211214034742543"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214034742543.png" alt="image-20211214034742543"></p>
 <p>PE中使用了一种称作“数据目录项IMAGE_DATA_DIRECTORY”的数据结构来定义每种数据。该结构只有两个字段。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214034836204.png" alt="image-20211214034836204"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214034836204.png" alt="image-20211214034836204"></p>
 <blockquote>
 <p>偏移基于IMAGE_NT_HEADERS头</p>
 </blockquote>
@@ -148,13 +148,13 @@
 <p>该数据目录的重要性体现在寻找特定类型的数据，如果查看PE中调用的DLL的函数，则需要从数据目录表的第2个元素获取导入表起始位置和大小，在根据VirtualAddress_1找到导入表字节码。</p>
 <h4 id="节表项"><a href="#节表项" class="headerlink" title="节表项"></a>节表项</h4><p>节表项IMAGE_SECTION_HEADER</p>
 <p>紧随在PE头后，每个节表项记录了PE中与某个特定的节有关的信息，如节的属性、节的大小、在文件和内存中的起始位置等。节表中节的数量由字段IMAGE_FILE_HEADER.NumberOfSections（标准PE头）来定义。</p>
-<p><img src="/2021/12/14/Windows-PE/PE/PE%5Cimage-20211214035717069.png" alt="image-20211214035717069"></p>
+<p><img src="/2021/12/14/Windows/PE/PE%5Cimage-20211214035717069.png" alt="image-20211214035717069"></p>
 <blockquote>
 <p>偏移是基于IMAGE_SECTION_HEADER头</p>
 </blockquote>
 ]]></content>
       <categories>
-        <category>Windows PE</category>
+        <category>Windows</category>
       </categories>
       <tags>
         <tag>PE</tag>
@@ -162,7 +162,7 @@
   </entry>
   <entry>
     <title>PE字段解析</title>
-    <url>/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/</url>
+    <url>/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/</url>
     <content><![CDATA[<h1 id="PE字段解析"><a href="#PE字段解析" class="headerlink" title="PE字段解析"></a>PE字段解析</h1><p>本文是对PE头部字段的逐个解析，很无聊（</p>
 <h2 id="PE头部字段"><a href="#PE头部字段" class="headerlink" title="PE头部字段"></a>PE头部字段</h2><p>IMAGE_NT_HEADER，由三个字段构成。</p>
 <h4 id="Signature"><a href="#Signature" class="headerlink" title=".Signature"></a>.Signature</h4><p>就是”P”，”E”加上两个0，也是PE这个称呼的由来。如果更改其中的任何一个字节，操作系统就无法把该文件识别为正确的PE文件。</p>
@@ -173,9 +173,9 @@
 <h3 id="IMAGE-FILE-HEADER字段解析"><a href="#IMAGE-FILE-HEADER字段解析" class="headerlink" title="IMAGE_FILE_HEADER字段解析"></a>IMAGE_FILE_HEADER字段解析</h3><h4 id="Machine"><a href="#Machine" class="headerlink" title=".Machine"></a>.Machine</h4><p>+0004h，单字，指定PE运行的平台。由于Windows最初被设计为可以运行在Intel、Sun、Dec、IBM等多种硬件平台上，或者能模拟这些平台的软件环境中，而不同的硬件平台其指令的机器码不相同，因此为不同平台编译的EXE文件是无法通用的。</p>
 <p>MASM32汇编可以用<code>.386</code>指定inter 386平台</p>
 <p>相关数值对应的处理器如下</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160557314.png" alt="image-20211214160557314"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160557314.png" alt="image-20211214160557314"></p>
 <p>x64下notepad.exe的IMAGE_FILE_HEADER.Machine值</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160631279.png" alt="image-20211214160631279"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160631279.png" alt="image-20211214160631279"></p>
 <h4 id="NumberOfSections"><a href="#NumberOfSections" class="headerlink" title=".NumberOfSections"></a>.NumberOfSections</h4><p>+0006h，单字。文件中存在的节的总数。可以有0个节，但数值不能小于1，也不能超过96。如果数值是0，操作系统会提示不是有效程序。在PE中增加或删除节必须修改此处的值。并且，PE节数必须和<strong>内存中的节</strong>相同，否则装载错误。</p>
 <h4 id="TimeDataStamp"><a href="#TimeDataStamp" class="headerlink" title=".TimeDataStamp"></a>.TimeDataStamp</h4><p>+0008h，双字，时间戳。低32位存放的值是自1970年1月1日00:00时开始到创建时间为止的总秒数。与操作系统文件属性里看到的三个时间（创建时间、修改时间、访问时间）没有关联，可以随意修改。</p>
 <h4 id="PointerToSymbolTable"><a href="#PointerToSymbolTable" class="headerlink" title=".PointerToSymbolTable"></a>.PointerToSymbolTable</h4><p>+000Ch，双字。COFF符号表的文件偏移。如果不存在COFF符号表，此值为0。对于映像文件来说，此值为0，因为微软已经不在PE中使用COFF调试信息。</p>
@@ -184,7 +184,7 @@
 <p>1）更改完以后，需要自行将文件中IMAGE_OPITONAL_HEADER32的大小扩充为你指定的值（一般以0补足）。</p>
 <p>2）扩充完以后，要维持文件中的对齐特性（比如此处增加了8个字节后，一定在后面相应地删除8个字节，以保证.text节起始位置处于0400h）。</p>
 <h4 id="Characteristics"><a href="#Characteristics" class="headerlink" title=".Characteristics"></a>.Characteristics</h4><p>+0016h，单字，文件属性标志字段。不同位定义了不同文件属性。</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214162935175.png" alt="image-20211214162935175"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214162935175.png" alt="image-20211214162935175"></p>
 <p>当第10位为1时，如果此映像文件在可移动存储介质上，那么加载器将完全加载它并把它复制到内存交换文件中。</p>
 <p>当第11位为1时，如果此映像文件在网络上，那么加载器也将完全加载它并把它复制到内存交换文件中。</p>
 <p>这是一个很重要的字段，不同的定义将影响系统对文件的装入方式。</p>
@@ -223,9 +223,9 @@
 <p>+0054h，双字。所有头+节表按照文件对齐粒度对齐后的大小（即含补足的0），按照200h对齐。</p>
 <h4 id="CheckSum"><a href="#CheckSum" class="headerlink" title=".CheckSum"></a>.CheckSum</h4><p>+0058h，双字。校验和，在大多数PE中，该值是0。在一些内核模式的驱动程序和系统DLL中，该值则是必须存在且是正确的。</p>
 <h4 id="Subsystem"><a href="#Subsystem" class="headerlink" title=".Subsystem"></a>.Subsystem</h4><p>+005ch，单字。指定使用界面的子系统。主要选择是GUI和CUI。</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005501888.png" alt="image-20211215005501888"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005501888.png" alt="image-20211215005501888"></p>
 <h4 id="DllCharacteristics"><a href="#DllCharacteristics" class="headerlink" title=".DllCharacteristics"></a>.DllCharacteristics</h4><p>+005eh，单字。DLL文件属性。是一个标志集，定义PE文件装载时的特性</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005655365.png" alt="image-20211215005655365"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005655365.png" alt="image-20211215005655365"></p>
 <h4 id="SizeOfStackReserve和-SizeOfStackCommit"><a href="#SizeOfStackReserve和-SizeOfStackCommit" class="headerlink" title=".SizeOfStackReserve和.SizeOfStackCommit"></a>.SizeOfStackReserve和.SizeOfStackCommit</h4><p>+0060h，双字，初始化时保留栈的大小。该字段表示为初始线程的栈而保留的虚拟内存数量，然而并不是留出的所有虚拟内存都可以做栈（真正的栈大小由下一个字段SizeOfStackCommit决定）。默认为0x100000。</p>
 <p>+0064h，双字，初始化时实际提交的栈大小。保证初始线程的栈实际占用内存空间的大小。默认是一页，1MB。</p>
 <h4 id="SizeOfHeapReserve和-SizeOfHeapCommit"><a href="#SizeOfHeapReserve和-SizeOfHeapCommit" class="headerlink" title=".SizeOfHeapReserve和.SizeOfHeapCommit"></a>.SizeOfHeapReserve和.SizeOfHeapCommit</h4><p>+0068h，双字。</p>
@@ -353,12 +353,12 @@
 <h4 id="NumberOfRelocations"><a href="#NumberOfRelocations" class="headerlink" title=".NumberOfRelocations"></a>.NumberOfRelocations</h4><p>+0020h，单字。重定位表的个数（在OBJ文件中使用）</p>
 <h4 id="NumberOfLinenumbers"><a href="#NumberOfLinenumbers" class="headerlink" title=".NumberOfLinenumbers"></a>.NumberOfLinenumbers</h4><p>+0022h，单字。行号表中行号的数量。</p>
 <h4 id="Characteristics-1"><a href="#Characteristics-1" class="headerlink" title=".Characteristics"></a>.Characteristics</h4><p>+0024h，双字。节的属性。这个字段很重要，这是节的属性标志字段。</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215021048562.png" alt="image-20211215021048562"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215021048562.png" alt="image-20211215021048562"></p>
 <p>代码节的属性一般为60000020h，也就是可执行、可读和“节中包含代码”；数据节的属性一般为c0000040h，也就是可读、可写和“包含已初始化数据”；而常量节（对应源代码中的.const段）的属性为40000040h，也就是可读和“包含已初始化数据”；资源节的属性和常量节的属性一般是相同的。</p>
 <p>当然，节属性的定义不一定必须是这些值。比如，当PE文件被压缩工具压缩以后，包含代码的节往往被同时设置成具有可执行、可读和可写属性，因为解压部分需要将解压后的代码回写到代码段中。</p>
 ]]></content>
       <categories>
-        <category>Windows PE</category>
+        <category>Windows</category>
       </categories>
       <tags>
         <tag>PE</tag>
@@ -592,96 +592,6 @@
         <tag>浮点数</tag>
         <tag>编码</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>导入表</title>
-    <url>/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/</url>
-    <content><![CDATA[<h1 id="导入表"><a href="#导入表" class="headerlink" title="导入表"></a>导入表</h1><p>作用:记录了一个exe或者一个dll所用到的其他模块导出的函数；<br> 所记录的信息有:用了哪些模块(用了哪些dll),用了dll的哪些函数</p>
-<p>导入表是为实现代码重用而设置的。</p>
-<p>在数据目录中一共有四种类型的数据与导入表数据有关。这四种数据依次为：导入表,导入函数地址表,绑定导入表,延迟加载导入表。这篇文章只介绍最基础的导入表结构和导入函数地址表。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">.386</span><br><span class="line">.model flat,stdcall</span><br><span class="line">option casemap:none</span><br><span class="line"></span><br><span class="line">include windows.inc</span><br><span class="line">include user32.inc</span><br><span class="line">includelib user32.lib</span><br><span class="line">include kernel32.inc</span><br><span class="line">includelib kernel32.lib</span><br><span class="line"></span><br><span class="line">;数据段</span><br><span class="line">.data</span><br><span class="line">szText db &#x27;HelloWorld&#x27;,0</span><br><span class="line">;代码段</span><br><span class="line">.code</span><br><span class="line">start:</span><br><span class="line">invoke MessageBox,NULL,offset szText,NULL,MB_OK</span><br><span class="line">invoke ExitProcess,NULL</span><br><span class="line">end start</span><br></pre></td></tr></table></figure>
-
-<p>以这个helloworld程序为例，展示函数导入的过程。</p>
-<h2 id="函数导入"><a href="#函数导入" class="headerlink" title="函数导入"></a>函数导入</h2><h3 id="函数导入过程"><a href="#函数导入过程" class="headerlink" title="函数导入过程"></a>函数导入过程</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">invoke MessageBox,NULL,offset szText,NULL,MB_OK</span><br><span class="line">invoke ExitProcess,NULL</span><br></pre></td></tr></table></figure>
-
-<p>打开OD</p>
-<p>OD可以查看装载在内存中的程序字节码</p>
-<p><strong><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20211219232320849.png" alt="image-20211219232320849"></strong></p>
-<p>在开头可以找到两个函数调用。</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20211219232602548.png" alt="image-20211219232602548">第一个调用语句被编译器解释为从地址0x00401000到0x0040100B的反汇编代码。根据地址0x0040100B处的调用关系来看，该语句还包含0x00401018处的跳转指令。</p>
-<p>第二个调用语句被编译器解释为从地址0x00401010到0x00401012的反汇编代码。根据地址0x00401012处的调用关系来看，该语句还包含0x0040101E处的跳转指令。</p>
-<p>汇编指令<code>invoke</code>被分解成了3个步骤。</p>
-<p>步骤1　压栈。即先将要调用的所有参数push到栈中。压栈时按照先推后参数，再推前参数的规则，即第一个推入栈的应该是调用的最后一个参数MB_OK，最后一个推入栈的参数应该是调用中的第一个参数NULL，尽管两者的值看起来都是0。</p>
-<p>步骤2　段内调用。即通过指令call调用一个段内地址，即call 00401018。</p>
-<p>步骤3　无条件转移。call指令操作数0x00401018处的值是：FF25 08204000，将该字节码反汇编，得到一个无条件跳转指令，跳转到了位置00402008处。</p>
-<blockquote>
-<p>010editor可以查看在磁盘中的程序字节码</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222101756210.png" alt="image-20211222101756210"></p>
-<p>可以发现两者字节码完全相同。这意味着，该程序在被装载以后加载的基址和IMAGE_OPTIONAL_HEADER32.ImageBase是相等的，不存在重定位问题（如果两者不相等，则指令中涉及全局操作数的部分就会有不同）。</p>
-</blockquote>
-<h3 id="导入函数地址"><a href="#导入函数地址" class="headerlink" title="导入函数地址"></a>导入函数地址</h3><p>先看内存中的导入表：</p>
-<p>在OD选中0040101E，右键“数据窗口中跟随|内存地址”显示内存从00402000开始的数据</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222104132121.png" alt="image-20211222104132121"></p>
-<p>得到导入函数MessageBoxA和ExitProcess的VA ：76844E10和769A3670（注意端序）</p>
-<p>接下来对比文件中的导入表：</p>
-<img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222113606944.png" alt="image-20211222113606944" style="zoom: 67%;">
-
-<p>可以看到VA为2076和205C，以MessageBoxA为例：VA - RVA可得到5C&lt;0x92(146)在.rdata段中 再加上PointerToRawData可以得到FOA为065Ch。</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222114414977.png" alt="image-20211222114414977"></p>
-<p>查看065Ch</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211219233953420.png" alt="image-20211219233953420"></p>
-<p>为01B1h和MessageBoxA.user32.dll字符串。这是一个”Hint/Name”结构。</p>
-<p>既然程序中调用了动态链接库的有关函数，那么程序进程地址空间中也一定会有这些函数的指令代码。也就是说，操作系统会在加载时根据导入表的描述将调用的函数指令字节码复制到进程地址空间中。结合上面所说，我们可以得到导入函数的具体过程：</p>
-<ol>
-<li><p>在将PE文件装载进内存时，Windows加载器会识别到<code>call &lt;jmp.&amp;usr32.MessageBoxA&gt;</code></p>
-</li>
-<li><p>段内跳转到<code>jmp dword ptr[&lt;&amp;usr32.MessageBoxA&gt;]</code></p>
-</li>
-<li><p>加载器继续查找对应位置0x00402008得到值0000205ch（此时函数没有被导入）</p>
-</li>
-<li><p>然后从文件的0x0000205c处获取函数的名字MessageBoxA和函数在动态链接库里的编号（Hint/Name）</p>
-</li>
-<li><p>根据函数的Hint/Name从内存地址空间中查找到函数的VA为77d507eah</p>
-</li>
-<li><p>并将找到的函数地址重新覆盖内存的0x00402008这个位置。</p>
-</li>
-</ol>
-<p>当程序真正被装载进内存以后，0x00402008这个位置就已经被替换成为函数的虚拟内存地址。</p>
-<img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222120220079.png" alt="image-20211222120220079" style="zoom:50%;">
-
-<p>事实上，操作系统总是会将该函数所处的动态链接库全部复制到进程地址空间，这些动态链接库便是导入函数的指令宿主。如果一个动态链接库在一个进程中被加载过，且在其他进程中也引用了该链接库的函数，操作系统不会再次加载这个动态链接库，而是通过页面调度机制使两个进程同时访问一个动态链接库。也就是说，为了节约内存资源，操作系统只保证有一份代码存在于物理内存中。</p>
-<h2 id="导入表-1"><a href="#导入表-1" class="headerlink" title="导入表"></a>导入表</h2><p>导入表是数据目录中注册的数据类型之一，其描述信息位于数据目录的第2个目录项中。IAT也是数据目录中注册的数据类型之一，其描述信息位于数据目录的第13个目录项中。</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222121246470.png" alt="image-20211222121246470"></p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222121300065.png" alt="image-20211222121300065"></p>
-<p>IAT数据所在文件的偏移地址=0x00000600</p>
-<p>导入表数据所在文件的偏移地址=0x00000610</p>
-<h3 id="导入表描述符"><a href="#导入表描述符" class="headerlink" title="导入表描述符"></a>导入表描述符</h3><p>导入表由一系列的导入表描述符组成，每组为20字节，最后有一个全为0的数组作为结束标志。</p>
-<p>导入表的每一组都是一个结构IMAGE_IMPORT_DESCRIPTOR，每个结构由5个双字组成。</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222182117196.png" alt="image-20211222182117196"></p>
-<h4 id="OriginalFirstThunk"><a href="#OriginalFirstThunk" class="headerlink" title=".OriginalFirstThunk"></a>.OriginalFirstThunk</h4><p>一个特殊的双字，不同时候有不同的解释，同时作为通向另外数据结构的通路桥一，这是一个RVA，它指向了一个结构体的数组INT（Import Name Table）。INT的每一项也是结构体，称为IMAGE_THUNK_DATA</p>
-<p>双字最高位为0，表示导入符号是一个数值，该数值是一个RVA。</p>
-<p>双字最高位为1，表示导入符号是一个名称。</p>
-<h4 id="Name1"><a href="#Name1" class="headerlink" title=".Name1"></a>.Name1</h4><p>是一个RVA，它指向该结构所对应的DLL文件的名称，而这个名称是以“\0”结尾的Ansi字符串。</p>
-<h4 id="FirstThunk"><a href="#FirstThunk" class="headerlink" title=".FirstThunk"></a>.FirstThunk</h4><p>指向IAT，作为桥二</p>
-<h3 id="双桥结构"><a href="#双桥结构" class="headerlink" title="双桥结构"></a>双桥结构</h3><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222182914669.png" alt="image-20211222182914669" style="zoom:50%;">
-
-<p>桥一和桥二经过不同的数据结构的通路，最终会指向相同的“Hint/Name”结构（未断裂）</p>
-<p>下面是MessageBoxA对应的导入表结构</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222183109301.png" alt="image-20211222183109301"></p>
-<p>可以看到桥一的数值是2054h，找到FOA等于654h，从文件的该位置开始取双字，直到取出的双字为“0”结束。这里在user32.dll中仅使用这一个函数</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222183214889.png" alt="image-20211222183214889"></p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222183714590.png" alt="image-20211222183714590"></p>
-<p>再次换算FOA为65Ch，找到IMAGE_IMPORT_BY_NAME的结构</p>
-<p><img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222183249149.png" alt="image-20211222183249149"></p>
-<p>这个结构就是桥一的最终目的地“Hint/Name”第一个字表示编号，第二个字表示名称</p>
-<p>每一个结构IMAGE_IMPORT_DESCRIPTOR（导入表描述符）都对应一个唯一的动态链接库文件，以及引用了该动态链接库的多个函数，每个函数的最终“值-名称”描述均可以沿着桥1或者桥2找到，这种导入表结构被称为双桥结构。</p>
-<p>我们也可以用桥二来寻找函数</p>
-<p>导入函数地址表（IAT）是一个双字的数组，每个双字代表的是一个导入函数的VA，该地址称为导入函数地址（Import Address，IA）。IAT中定义了不止一个链接库的函数，为了区分这些从不同链接库引入的函数，规定所有引入函数按照链接库分类；相同链接库的函数地址排列在一起，最后以一个双字的0结束。</p>
-<img src="/2021/12/22/uncategorized/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222184120682.png" alt="image-20211222184120682" style="zoom:33%;">
-
-<p>在内存中，桥1可以让你找到调用的函数名称或函数的索引编号，桥2却可以帮助你找到该函数指令代码在内存空间的地址。</p>
-<p>当PE被加载进虚拟地址空间以后，IAT的内容会被操作系统更改为函数的VA。这个修改最终会导致通向“值-名称”描述的桥2发生断裂，这时我们就只能通过桥一来确认导入了那些函数。</p>
-]]></content>
   </entry>
   <entry>
     <title>程序的机器级表示（一）</title>

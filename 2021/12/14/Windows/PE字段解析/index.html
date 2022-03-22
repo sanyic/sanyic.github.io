@@ -64,9 +64,9 @@ PE头部字段IMAGE_NT_HEADER，由三个字段构成。
 <h3 id="IMAGE-FILE-HEADER字段解析"><a href="#IMAGE-FILE-HEADER字段解析" class="headerlink" title="IMAGE_FILE_HEADER字段解析"></a>IMAGE_FILE_HEADER字段解析</h3><h4 id="Machine"><a href="#Machine" class="headerlink" title=".Machine"></a>.Machine</h4><p>+0004h，单字，指定PE运行的平台。由于Windows最初被设计为可以运行在Intel、Sun、Dec、IBM等多种硬件平台上，或者能模拟这些平台的软件环境中，而不同的硬件平台其指令的机器码不相同，因此为不同平台编译的EXE文件是无法通用的。</p>
 <p>MASM32汇编可以用<code>.386</code>指定inter 386平台</p>
 <p>相关数值对应的处理器如下</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160557314.png" alt="image-20211214160557314"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160557314.png" alt="image-20211214160557314"></p>
 <p>x64下notepad.exe的IMAGE_FILE_HEADER.Machine值</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160631279.png" alt="image-20211214160631279"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214160631279.png" alt="image-20211214160631279"></p>
 <h4 id="NumberOfSections"><a href="#NumberOfSections" class="headerlink" title=".NumberOfSections"></a>.NumberOfSections</h4><p>+0006h，单字。文件中存在的节的总数。可以有0个节，但数值不能小于1，也不能超过96。如果数值是0，操作系统会提示不是有效程序。在PE中增加或删除节必须修改此处的值。并且，PE节数必须和<strong>内存中的节</strong>相同，否则装载错误。</p>
 <h4 id="TimeDataStamp"><a href="#TimeDataStamp" class="headerlink" title=".TimeDataStamp"></a>.TimeDataStamp</h4><p>+0008h，双字，时间戳。低32位存放的值是自1970年1月1日00:00时开始到创建时间为止的总秒数。与操作系统文件属性里看到的三个时间（创建时间、修改时间、访问时间）没有关联，可以随意修改。</p>
 <h4 id="PointerToSymbolTable"><a href="#PointerToSymbolTable" class="headerlink" title=".PointerToSymbolTable"></a>.PointerToSymbolTable</h4><p>+000Ch，双字。COFF符号表的文件偏移。如果不存在COFF符号表，此值为0。对于映像文件来说，此值为0，因为微软已经不在PE中使用COFF调试信息。</p>
@@ -75,7 +75,7 @@ PE头部字段IMAGE_NT_HEADER，由三个字段构成。
 <p>1）更改完以后，需要自行将文件中IMAGE_OPITONAL_HEADER32的大小扩充为你指定的值（一般以0补足）。</p>
 <p>2）扩充完以后，要维持文件中的对齐特性（比如此处增加了8个字节后，一定在后面相应地删除8个字节，以保证.text节起始位置处于0400h）。</p>
 <h4 id="Characteristics"><a href="#Characteristics" class="headerlink" title=".Characteristics"></a>.Characteristics</h4><p>+0016h，单字，文件属性标志字段。不同位定义了不同文件属性。</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214162935175.png" alt="image-20211214162935175"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211214162935175.png" alt="image-20211214162935175"></p>
 <p>当第10位为1时，如果此映像文件在可移动存储介质上，那么加载器将完全加载它并把它复制到内存交换文件中。</p>
 <p>当第11位为1时，如果此映像文件在网络上，那么加载器也将完全加载它并把它复制到内存交换文件中。</p>
 <p>这是一个很重要的字段，不同的定义将影响系统对文件的装入方式。</p>
@@ -114,9 +114,9 @@ PE头部字段IMAGE_NT_HEADER，由三个字段构成。
 <p>+0054h，双字。所有头+节表按照文件对齐粒度对齐后的大小（即含补足的0），按照200h对齐。</p>
 <h4 id="CheckSum"><a href="#CheckSum" class="headerlink" title=".CheckSum"></a>.CheckSum</h4><p>+0058h，双字。校验和，在大多数PE中，该值是0。在一些内核模式的驱动程序和系统DLL中，该值则是必须存在且是正确的。</p>
 <h4 id="Subsystem"><a href="#Subsystem" class="headerlink" title=".Subsystem"></a>.Subsystem</h4><p>+005ch，单字。指定使用界面的子系统。主要选择是GUI和CUI。</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005501888.png" alt="image-20211215005501888"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005501888.png" alt="image-20211215005501888"></p>
 <h4 id="DllCharacteristics"><a href="#DllCharacteristics" class="headerlink" title=".DllCharacteristics"></a>.DllCharacteristics</h4><p>+005eh，单字。DLL文件属性。是一个标志集，定义PE文件装载时的特性</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005655365.png" alt="image-20211215005655365"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215005655365.png" alt="image-20211215005655365"></p>
 <h4 id="SizeOfStackReserve和-SizeOfStackCommit"><a href="#SizeOfStackReserve和-SizeOfStackCommit" class="headerlink" title=".SizeOfStackReserve和.SizeOfStackCommit"></a>.SizeOfStackReserve和.SizeOfStackCommit</h4><p>+0060h，双字，初始化时保留栈的大小。该字段表示为初始线程的栈而保留的虚拟内存数量，然而并不是留出的所有虚拟内存都可以做栈（真正的栈大小由下一个字段SizeOfStackCommit决定）。默认为0x100000。</p>
 <p>+0064h，双字，初始化时实际提交的栈大小。保证初始线程的栈实际占用内存空间的大小。默认是一页，1MB。</p>
 <h4 id="SizeOfHeapReserve和-SizeOfHeapCommit"><a href="#SizeOfHeapReserve和-SizeOfHeapCommit" class="headerlink" title=".SizeOfHeapReserve和.SizeOfHeapCommit"></a>.SizeOfHeapReserve和.SizeOfHeapCommit</h4><p>+0068h，双字。</p>
@@ -244,7 +244,7 @@ PE头部字段IMAGE_NT_HEADER，由三个字段构成。
 <h4 id="NumberOfRelocations"><a href="#NumberOfRelocations" class="headerlink" title=".NumberOfRelocations"></a>.NumberOfRelocations</h4><p>+0020h，单字。重定位表的个数（在OBJ文件中使用）</p>
 <h4 id="NumberOfLinenumbers"><a href="#NumberOfLinenumbers" class="headerlink" title=".NumberOfLinenumbers"></a>.NumberOfLinenumbers</h4><p>+0022h，单字。行号表中行号的数量。</p>
 <h4 id="Characteristics-1"><a href="#Characteristics-1" class="headerlink" title=".Characteristics"></a>.Characteristics</h4><p>+0024h，双字。节的属性。这个字段很重要，这是节的属性标志字段。</p>
-<p><img src="/2021/12/14/Windows-PE/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215021048562.png" alt="image-20211215021048562"></p>
+<p><img src="/2021/12/14/Windows/PE%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/image-20211215021048562.png" alt="image-20211215021048562"></p>
 <p>代码节的属性一般为60000020h，也就是可执行、可读和“节中包含代码”；数据节的属性一般为c0000040h，也就是可读、可写和“包含已初始化数据”；而常量节（对应源代码中的.const段）的属性为40000040h，也就是可读和“包含已初始化数据”；资源节的属性和常量节的属性一般是相同的。</p>
 <p>当然，节属性的定义不一定必须是这些值。比如，当PE文件被压缩工具压缩以后，包含代码的节往往被同时设置成具有可执行、可读和可写属性，因为解压部分需要将解压后的代码回写到代码段中。</p>
 
