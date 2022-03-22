@@ -63,7 +63,7 @@
       </tags>
   </entry>
   <entry>
-    <title>PE基本介绍</title>
+    <title>PE格式</title>
     <url>/2021/12/14/Windows-PE/PE/</url>
     <content><![CDATA[<h1 id="PE基本介绍"><a href="#PE基本介绍" class="headerlink" title="PE基本介绍"></a>PE基本介绍</h1><p>PE（Portable Executable）可移植可执行文件，在COFF格式的基础上制作来。提高程序在不同平台的可移植性。</p>
 <p>PE一般指PE32,64位的可执行文件称为PE+或PE32+。</p>
@@ -158,18 +158,6 @@
       </categories>
       <tags>
         <tag>PE</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>PE前置知识</title>
-    <url>/2021/12/21/Windows-PE/PE%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/</url>
-    <content><![CDATA[]]></content>
-      <categories>
-        <category>Windows PE</category>
-      </categories>
-      <tags>
-        <tag>PE</tag>
-        <tag>重定位</tag>
       </tags>
   </entry>
   <entry>
@@ -375,23 +363,6 @@
       <tags>
         <tag>PE</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>flag</title>
-    <url>/2021/12/25/uncategorized/flag/</url>
-    <content><![CDATA[<ol>
-<li> 手工重组导入表失败（</li>
-</ol>
-<p>​         正在重试中</p>
-<ol start="2">
-<li><p>PE解析器正在写</p>
-</li>
-<li><p>PE打算先放一下，内容太多，往后看DLL注入</p>
-</li>
-<li><p>有奆佬带我写CSAPP，好耶</p>
-</li>
-</ol>
-]]></content>
   </entry>
   <entry>
     <title>信息的表示和处理</title>
