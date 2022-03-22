@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="“zh-CN”" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PE解析器简单实现 - sanyicの博客</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="sanyic,"> 
+    <meta name="description" content="sanyic,PE解析器的简单实现写东西之前一定要去网上查资料（ 我上一个版本不知道可以拿预定义好的结构体来读取数据，导致自己按字节读取了好久。。。
+使用的头文件
+123#include &amp;lt;Windows.,"> 
+    <meta name="author" content="sanyic"> 
+    <link rel="alternative" href="atom.xml" title="sanyicの博客" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.ico"> 
+    
+    
+<link rel="stylesheet" href="/css/diaspora.css">
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body class="loading">
+    <span id="config-title" style="display:none">sanyicの博客</span>
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="iconfont icon-home image-icon" href="javascript:;" data-url="https://sanyic.github.io"></a>
+    <div title="播放/暂停" class="iconfont icon-play"></div>
+    <h3 class="subtitle">PE解析器简单实现</h3>
+    <div class="social">
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="iconfont icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">PE解析器简单实现</h1>
+        <div class="stuff">
+            <span>三月 23, 2022</span>
+            
+  <ul class="post-tags-list" itemprop="keywords"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/PE/" rel="tag">PE</a></li></ul>
+
+
+        </div>
+        <div class="content markdown">
+            <h2 id="PE解析器的简单实现"><a href="#PE解析器的简单实现" class="headerlink" title="PE解析器的简单实现"></a>PE解析器的简单实现</h2><p>写东西之前一定要去网上查资料（ 我上一个版本不知道可以拿预定义好的结构体来读取数据，导致自己按字节读取了好久。。。</p>
+<p>使用的头文件</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;Windows.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iomanip&gt;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>创建一个PE解析器类，首先考虑到PE文件解析时候要多次检测，设置一个Check（）成员函数，不同组分的打印各自设定函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">PEInfo</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">PEInfo</span>(<span class="keyword">const</span> <span class="keyword">char</span>* filename);</span><br><span class="line">	~<span class="built_in">PEInfo</span>();</span><br><span class="line">	<span class="function">BOOL <span class="title">Check</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">friend</span></span></span><br><span class="line"><span class="function">		BOOL <span class="title">FileCheck</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">friend</span></span></span><br><span class="line"><span class="function">		BOOL <span class="title">MapCheck</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">friend</span></span></span><br><span class="line"><span class="function">		BOOL <span class="title">ImageCheck</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">friend</span></span></span><br><span class="line"><span class="function">		BOOL <span class="title">PECheck</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span>;</span><br><span class="line">	<span class="function">BOOL <span class="title">NTHeaderShow</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function">BOOL <span class="title">SectionTableShow</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function">BOOL <span class="title">ImportTableShow</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function">BOOL <span class="title">ExportTableShow</span><span class="params">()</span></span>;</span><br><span class="line">	<span class="function"><span class="keyword">friend</span></span></span><br><span class="line"><span class="function">		PIMAGE_NT_HEADERS	<span class="title">pNTGet</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span>;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">PEhand</span></span></span><br><span class="line"><span class="class">	&#123;</span></span><br><span class="line">		HANDLE hFile;</span><br><span class="line">		HANDLE hMapping;</span><br><span class="line">		LPVOID Imagebase;</span><br><span class="line">	&#125;PEh;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>pNT后面会多次使用，我们设置一个非成员的友元函数接口，实际上设置到PEhand或许会更好？</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PEInfo::<span class="built_in">PEInfo</span>(<span class="keyword">const</span> <span class="keyword">char</span>* filename)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">this</span>-&gt;PEh.hFile = <span class="built_in">CreateFileA</span>(filename, GENERIC_READ, FILE_SHARE_READ, <span class="literal">NULL</span>, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">this</span>-&gt;PEh.hMapping = <span class="built_in">CreateFileMappingA</span>(<span class="keyword">this</span>-&gt;PEh.hFile, <span class="literal">NULL</span>, PAGE_READONLY, <span class="number">0</span>, <span class="number">0</span>, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">this</span>-&gt;PEh.Imagebase = <span class="built_in">MapViewOfFile</span>(<span class="keyword">this</span>-&gt;PEh.hMapping, FILE_MAP_READ, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>设置构造函数，Imagebase的使用尤其频繁。</p>
+<p>首先实现检测</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">PEInfo::Check</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">FileCheck</span>(*<span class="keyword">this</span>);</span><br><span class="line">	<span class="built_in">MapCheck</span>(*<span class="keyword">this</span>);</span><br><span class="line">	<span class="built_in">ImageCheck</span>(*<span class="keyword">this</span>);</span><br><span class="line">	<span class="built_in">PECheck</span>(*<span class="keyword">this</span>);</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;This File is a PE File&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里分别进行了文件打开，文件映射，和PE格式检测，也可以放到PEInfo的构造函数进行自动检测</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">MapCheck</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (!pe.PEh.hMapping)</span><br><span class="line">	&#123;</span><br><span class="line">		std::cout &lt;&lt; <span class="string">&quot;MAPPING CREATE FAILED!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">BOOL <span class="title">ImageCheck</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (!pe.PEh.Imagebase)</span><br><span class="line">	&#123;</span><br><span class="line">		std::cout &lt;&lt; <span class="string">&quot;FILE MAPPING FAILED!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">BOOL <span class="title">FileCheck</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (!pe.PEh.hFile)</span><br><span class="line">	&#123;</span><br><span class="line">		std::cout &lt;&lt; <span class="string">&quot;FILE OPEN FAILED!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">BOOL <span class="title">PECheck</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	PIMAGE_DOS_HEADER	pDos = (PIMAGE_DOS_HEADER)pe.PEh.Imagebase;</span><br><span class="line">	<span class="keyword">if</span> (pDos-&gt;e_magic != IMAGE_DOS_SIGNATURE)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	PIMAGE_NT_HEADERS pNT = (PIMAGE_NT_HEADERS)((DWORD)pDos + pDos-&gt;e_lfanew);</span><br><span class="line">	<span class="keyword">if</span> (pNT-&gt;Signature != IMAGE_NT_SIGNATURE)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于涉及到多次的打印，这里用可变参数模板设计了一套泛型的打印</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ..._Ts&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Printer</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Printer</span>&lt;</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Printer</span>&lt;</span>_T&gt;</span><br><span class="line">&#123;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Print</span><span class="params">(<span class="keyword">const</span> _T&amp; arg)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		std::cout &lt;&lt; arg &lt;&lt;std::endl;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _T,<span class="keyword">typename</span> ..._Ts&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Printer</span>&lt;</span>_T,_Ts...&gt;</span><br><span class="line">&#123;</span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Print</span><span class="params">(<span class="keyword">const</span> _T&amp; arg, <span class="keyword">const</span> _Ts &amp;...args)</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">		std::cout&lt;&lt;std::<span class="built_in">setw</span>(<span class="number">30</span>)&lt;&lt;std::<span class="built_in">setbase</span>(<span class="number">16</span>)&lt;&lt;std::showbase&lt;&lt;std::uppercase&lt;&lt; arg &lt;&lt;<span class="string">&quot; &quot;</span>;</span><br><span class="line">		Printer&lt;_Ts...&gt;::<span class="built_in">Print</span>(args...);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _T,<span class="keyword">typename</span> ..._Ts&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Print</span><span class="params">(<span class="keyword">const</span> _T &amp;arg,<span class="keyword">const</span> _Ts &amp;...args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	Printer&lt;_T,_Ts...&gt;::<span class="built_in">Print</span>(arg,args...);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">PIMAGE_NT_HEADERS <span class="title">pNTGet</span><span class="params">(<span class="keyword">const</span> PEInfo&amp; pe)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	PIMAGE_DOS_HEADER pDos = <span class="literal">nullptr</span>;</span><br><span class="line">	PIMAGE_NT_HEADERS pNT = <span class="literal">nullptr</span>;</span><br><span class="line">	pDos = (PIMAGE_DOS_HEADER)pe.PEh.Imagebase;</span><br><span class="line">	pNT = (PIMAGE_NT_HEADERS)((DWORD)pDos + pDos-&gt;e_lfanew);</span><br><span class="line">	<span class="keyword">return</span> pNT;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>NT头指针的获取，在后面的实现中我们多次使用NT头来定位。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">PEInfo::NTHeaderShow</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	PIMAGE_NT_HEADERS  pNT = <span class="built_in">pNTGet</span>(*<span class="keyword">this</span>);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Signature:\t\t&quot;</span>, pNT-&gt;Signature);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Machine:\t\t&quot;</span>, pNT-&gt;FileHeader.Machine);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;NumberOfSection:\t\t&quot;</span>, pNT-&gt;FileHeader.NumberOfSections);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;TimeDataStamp:\t\t&quot;</span>, pNT-&gt;FileHeader.TimeDateStamp);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;SizeOfOptionalHeader:\t\t&quot;</span>, pNT-&gt;FileHeader.SizeOfOptionalHeader);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Characteristics:\t\t&quot;</span>, pNT-&gt;FileHeader.Characteristics);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;-----------------可选头-----------------&quot;</span>);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Magic:\t\t&quot;</span>, pNT-&gt;OptionalHeader.Magic);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;AddressOfEntryPoint:\t\t&quot;</span>, pNT-&gt;OptionalHeader.AddressOfEntryPoint);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;ImageBase:\t\t&quot;</span>, pNT-&gt;OptionalHeader.ImageBase);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;SectionAlignment:\t\t&quot;</span>, pNT-&gt;OptionalHeader.SectionAlignment);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;FileAlignment:\t\t&quot;</span>, pNT-&gt;OptionalHeader.FileAlignment);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;SizeOfImage:\t\t&quot;</span>, pNT-&gt;OptionalHeader.SizeOfImage);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;SizeOfHeader:\t\t&quot;</span>, pNT-&gt;OptionalHeader.SizeOfHeaders);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Subsystem:\t\t&quot;</span>, pNT-&gt;OptionalHeader.Subsystem);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;NumberOfRvaAndSizes:\t\t&quot;</span>, pNT-&gt;OptionalHeader.NumberOfRvaAndSizes);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;SizeOfImage:\t\t&quot;</span>, pNT-&gt;OptionalHeader.SizeOfImage);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;SizeOfHeader:\t\t&quot;</span>, pNT-&gt;OptionalHeader.SizeOfHeaders);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Subsystem:\t\t&quot;</span>, pNT-&gt;OptionalHeader.Subsystem);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;---------------数据目录表---------------&quot;</span>);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Export表的地址:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">0</span>].VirtualAddress);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Export的Size:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">0</span>].Size);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Import的地址:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">1</span>].VirtualAddress);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Import的Size:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">1</span>].Size);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Resource的地址:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">2</span>].VirtualAddress);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Resource的Size:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">2</span>].Size);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Reloc表的地址:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">5</span>].VirtualAddress);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;Reloc的Size:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">5</span>].Size);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;TLS表的地址:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">9</span>].VirtualAddress);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;TLS的Size:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">9</span>].Size);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;IAT的地址:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">12</span>].VirtualAddress);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;IAT的Size:\t\t&quot;</span>, pNT-&gt;OptionalHeader.DataDirectory[<span class="number">12</span>].Size);</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;----------------------------------------- &quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>很麻烦的打印（NT头）</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">PEInfo::SectionTableShow</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	PIMAGE_NT_HEADERS pNT = <span class="built_in">pNTGet</span>(*<span class="keyword">this</span>);</span><br><span class="line">	PIMAGE_SECTION_HEADER pSH = <span class="keyword">reinterpret_cast</span>&lt;PIMAGE_SECTION_HEADER&gt;(<span class="built_in">IMAGE_FIRST_SECTION</span>(pNT));</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;-----------------节区表------------------&quot;</span>);</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; pNT-&gt;FileHeader.NumberOfSections; i++)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">Print</span>(<span class="string">&quot;Name:\t\t&quot;</span>, pSH-&gt;Name);<span class="comment">//8位的ASCii码，&#x27;.&#x27;开始‘ ’结尾，如果带有$的会被合并</span></span><br><span class="line">		<span class="built_in">Print</span>(<span class="string">&quot;VirtualSize:\t\t&quot;</span>, pSH-&gt;Misc.VirtualSize);<span class="comment">//对齐前区块大小</span></span><br><span class="line">		<span class="built_in">Print</span>(<span class="string">&quot;VirtualAddress:\t\t&quot;</span>, pSH-&gt;VirtualAddress);</span><br><span class="line">		<span class="built_in">Print</span>(<span class="string">&quot;SizeOfRawData:\t\t&quot;</span>, pSH-&gt;SizeOfRawData);<span class="comment">//磁盘所占空间</span></span><br><span class="line">		<span class="built_in">Print</span>(<span class="string">&quot;PointerToRawData:\t\t&quot;</span>, pSH-&gt;PointerToRawData);<span class="comment">//更有意义</span></span><br><span class="line">		<span class="built_in">Print</span>(<span class="string">&quot;Characteristics:\t\t&quot;</span>, pSH-&gt;Characteristics);</span><br><span class="line">		<span class="built_in">Print</span>(<span class="string">&quot;------------------------------------------&quot;</span>);</span><br><span class="line">		pSH++;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打印SectionTable</p>
+<p>接下来是打印输入输出表，在这之前我们先定义一个RVATORAW函数，方便后续操作</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">DWORD <span class="title">RVATORAW</span><span class="params">(DWORD RVA, <span class="keyword">const</span> PEInfo&amp; pe)</span> </span>&#123;</span><br><span class="line">	DWORD RAW = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">auto</span> pNT = <span class="built_in">pNTGet</span>(pe);</span><br><span class="line">	PIMAGE_OPTIONAL_HEADER pOH = &amp;(pNT-&gt;OptionalHeader);</span><br><span class="line">	<span class="keyword">auto</span> pSH = <span class="keyword">reinterpret_cast</span>&lt;PIMAGE_SECTION_HEADER&gt;(<span class="built_in">IMAGE_FIRST_SECTION</span>(pNT));</span><br><span class="line">	<span class="keyword">if</span> (RVA &lt;= pOH-&gt;SizeOfHeaders)</span><br><span class="line">		<span class="keyword">return</span> RVA;</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; pNT-&gt;FileHeader.NumberOfSections; i++)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (RVA &gt;= pSH[i].VirtualAddress &amp;&amp; RVA &lt;= pSH[i].VirtualAddress + pSH[i].Misc.VirtualSize)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">return</span> RVA - pSH[i].VirtualAddress + pSH[i].PointerToRawData;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> RAW;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>RAW = RVA - VA +pointertoraw</p>
+<p>打印输入表</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">PEInfo::ImportTableShow</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="built_in">Print</span>(<span class="string">&quot;\t\t\t\t\t-----------------导入表-----------------&quot;</span>);</span><br><span class="line">	<span class="keyword">auto</span> pNT = <span class="built_in">pNTGet</span>(*<span class="keyword">this</span>);</span><br><span class="line">	<span class="keyword">auto</span> pDATA_IMT = <span class="keyword">reinterpret_cast</span>&lt;PIMAGE_DATA_DIRECTORY&gt;(pNT-&gt;OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_IMPORT);</span><br><span class="line">	<span class="keyword">auto</span> pIMT = <span class="keyword">reinterpret_cast</span>&lt;PIMAGE_IMPORT_DESCRIPTOR&gt;((<span class="built_in">RVATORAW</span>(pDATA_IMT-&gt;VirtualAddress, *<span class="keyword">this</span>)+ (DWORD)PEh.Imagebase));</span><br><span class="line">	<span class="keyword">while</span> (pIMT-&gt;FirstThunk)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">Print</span>(<span class="string">&quot;\n\n-----FILE:\t\t&quot;</span>, (<span class="keyword">char</span>*)(<span class="built_in">RVATORAW</span>(pIMT-&gt;Name,*<span class="keyword">this</span>)+ (DWORD)PEh.Imagebase),<span class="string">&quot;\n\n&quot;</span>);</span><br><span class="line">		<span class="keyword">auto</span> pDATA_IAT = <span class="keyword">reinterpret_cast</span>&lt;PIMAGE_DATA_DIRECTORY&gt;(pNT-&gt;OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_IAT);</span><br><span class="line">		<span class="keyword">auto</span> pIAT = <span class="keyword">reinterpret_cast</span>&lt;PIMAGE_THUNK_DATA&gt;((<span class="built_in">RVATORAW</span>(pDATA_IAT-&gt;VirtualAddress, *<span class="keyword">this</span>) + (DWORD)PEh.Imagebase));</span><br><span class="line">		<span class="keyword">for</span>(;pIAT-&gt;u1.Ordinal != <span class="number">0</span>;pIAT++)</span><br><span class="line">		&#123;</span><br><span class="line">			PIMAGE_IMPORT_BY_NAME pName = (PIMAGE_IMPORT_BY_NAME)(<span class="built_in">RVATORAW</span>(pIAT-&gt;u1.AddressOfData, *<span class="keyword">this</span>) + (DWORD)PEh.Imagebase);</span><br><span class="line">			<span class="built_in">Print</span>(<span class="string">&quot;FunctionName:\t\t&quot;</span>, pName-&gt;Name, <span class="string">&quot;FunctionHint:\t\t&quot;</span>, pName-&gt;Hint);</span><br><span class="line">		&#125;</span><br><span class="line">		pIMT++;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出表类似，不再演示。</p>
+<p>很容易出错的地方是输出表打印时候的几处RVATORAW转换,区分好数据具体代表什么，不然就会和我一样调到凌晨4点（</p>
+<p>主函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (argc &gt;= <span class="number">2</span> &amp;&amp; <span class="built_in"><span class="keyword">sizeof</span></span>(argv[<span class="number">1</span>]) &gt; <span class="number">3</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="function">PEInfo <span class="title">PEh</span><span class="params">(argv[<span class="number">1</span>])</span></span>;</span><br><span class="line">		PEh.<span class="built_in">NTHeaderShow</span>();</span><br><span class="line">		PEh.<span class="built_in">SectionTableShow</span>();</span><br><span class="line">		PEh.<span class="built_in">ImportTableShow</span>();</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">	&#123;</span><br><span class="line">		std::cout &lt;&lt; <span class="string">&quot;Input a correct filename plesae!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>虽然说已经写过一遍PE解析器了，但是用C++尝试不同风格来进行编程区别还是挺大的。初学C++，很多地方做的不是很合理，整体的设计也不完善（虽然能用了），感受到C++的强（tuo）大（fa）了。</p>
+<p>放几张效果图：</p>
+<img src="/2022/03/23/Windows/PE%E8%A7%A3%E6%9E%90%E5%99%A8%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/image-20220323043054150.png" alt="image-20220323043054150" style="zoom:33%;">
+
+<img src="/2022/03/23/Windows/PE%E8%A7%A3%E6%9E%90%E5%99%A8%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/image-20220323042942385.png" alt="image-20220323042942385" style="zoom: 33%;">
+
+<p>确实丑哈（</p>
+<blockquote>
+<p>很久很久没更了，理由包括但不限于假期emo,c++的制裁和懒（，之后还是该做到每周更新的</p>
+</blockquote>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="">
+            </audio>
+            
+                <ul id="audio-list" style="display:none">
+                    
+                        
+                            <li title='0' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                        
+                            <li title='1' data-url='http://link.hhtjim.com/163/425570952.mp3'></li>
+                        
+                    
+                </ul>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+		data-enable='false'
+        data-ae='false'
+        data-ci='45f20068d0ff5ed5fccc'
+        data-cs='36072b1532a875a0fa8ef6960eec13035f4f7811'
+        data-r='sanyic.github.io'
+        data-o='sanyic'
+        data-a='sanyic'
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+        <div class='side'>
+			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#PE%E8%A7%A3%E6%9E%90%E5%99%A8%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0"><span class="toc-number">1.</span> <span class="toc-text">PE解析器的简单实现</span></a></li></ol>	
+        </div>
+    
+</div>
+
+
+    </div>
+</div>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/z16.model.json"},"display":{"position":"right","width":250,"height":400},"mobile":{"show":true},"log":false});</script></body>
+
+
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/typed.js"></script>
+<script src="/js/diaspora.js"></script>
+
+
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+
+
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    });
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+
+<!-- Google Analytics -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=/"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '/');
+</script>
+<!-- End Google Analytics -->
+
+
+</html>
