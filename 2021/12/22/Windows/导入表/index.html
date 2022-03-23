@@ -76,20 +76,19 @@
 <p>步骤3　无条件转移。call指令操作数0x00401018处的值是：FF25 08204000，将该字节码反汇编，得到一个无条件跳转指令，跳转到了位置00402008处。</p>
 <blockquote>
 <p>010editor可以查看在磁盘中的程序字节码</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222101756210.png" alt="image-20211222101756210"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021144668.png"></p>
 <p>可以发现两者字节码完全相同。这意味着，该程序在被装载以后加载的基址和IMAGE_OPTIONAL_HEADER32.ImageBase是相等的，不存在重定位问题（如果两者不相等，则指令中涉及全局操作数的部分就会有不同）。</p>
 </blockquote>
 <h3 id="导入函数地址"><a href="#导入函数地址" class="headerlink" title="导入函数地址"></a>导入函数地址</h3><p>先看内存中的导入表：</p>
 <p>在OD选中0040101E，右键“数据窗口中跟随|内存地址”显示内存从00402000开始的数据</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222104132121.png" alt="image-20211222104132121"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021448931.png"></p>
 <p>得到导入函数MessageBoxA和ExitProcess的VA ：76844E10和769A3670（注意端序）</p>
 <p>接下来对比文件中的导入表：</p>
-<img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222113606944.png" alt="image-20211222113606944" style="zoom: 67%;">
-
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021152984.png" alt="image-20220324021152984"><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021159382-16480592123511.png" alt="image-20220324021159382"></p>
 <p>可以看到VA为2076和205C，以MessageBoxA为例：VA - RVA可得到5C&lt;0x92(146)在.rdata段中 再加上PointerToRawData可以得到FOA为065Ch。</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222114414977.png" alt="image-20211222114414977"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021220996.png"></p>
 <p>查看065Ch</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211219233953420.png" alt="image-20211219233953420"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021237814.png"></p>
 <p>为01B1h和MessageBoxA.user32.dll字符串。这是一个”Hint/Name”结构。</p>
 <p>既然程序中调用了动态链接库的有关函数，那么程序进程地址空间中也一定会有这些函数的指令代码。也就是说，操作系统会在加载时根据导入表的描述将调用的函数指令字节码复制到进程地址空间中。结合上面所说，我们可以得到导入函数的具体过程：</p>
 <ol>
@@ -107,37 +106,35 @@
 </li>
 </ol>
 <p>当程序真正被装载进内存以后，0x00402008这个位置就已经被替换成为函数的虚拟内存地址。</p>
-<img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222120220079.png" alt="image-20211222120220079" style="zoom:50%;">
-
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021133989.png" alt="导入表/image-20220324021133989"></p>
 <p>事实上，操作系统总是会将该函数所处的动态链接库全部复制到进程地址空间，这些动态链接库便是导入函数的指令宿主。如果一个动态链接库在一个进程中被加载过，且在其他进程中也引用了该链接库的函数，操作系统不会再次加载这个动态链接库，而是通过页面调度机制使两个进程同时访问一个动态链接库。也就是说，为了节约内存资源，操作系统只保证有一份代码存在于物理内存中。</p>
 <h2 id="导入表-1"><a href="#导入表-1" class="headerlink" title="导入表"></a>导入表</h2><p>导入表是数据目录中注册的数据类型之一，其描述信息位于数据目录的第2个目录项中。IAT也是数据目录中注册的数据类型之一，其描述信息位于数据目录的第13个目录项中。</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222121246470.png" alt="image-20211222121246470"></p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222121300065.png" alt="image-20211222121300065"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021117481.png"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021123963.png"></p>
 <p>IAT数据所在文件的偏移地址=0x00000600</p>
 <p>导入表数据所在文件的偏移地址=0x00000610</p>
 <h3 id="导入表描述符"><a href="#导入表描述符" class="headerlink" title="导入表描述符"></a>导入表描述符</h3><p>导入表由一系列的导入表描述符组成，每组为20字节，最后有一个全为0的数组作为结束标志。</p>
 <p>导入表的每一组都是一个结构IMAGE_IMPORT_DESCRIPTOR，每个结构由5个双字组成。</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222182117196.png" alt="image-20211222182117196"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021108440.png"></p>
 <h4 id="OriginalFirstThunk"><a href="#OriginalFirstThunk" class="headerlink" title=".OriginalFirstThunk"></a>.OriginalFirstThunk</h4><p>一个特殊的双字，不同时候有不同的解释，同时作为通向另外数据结构的通路桥一，这是一个RVA，它指向了一个结构体的数组INT（Import Name Table）。INT的每一项也是结构体，称为IMAGE_THUNK_DATA</p>
 <p>双字最高位为0，表示导入符号是一个数值，该数值是一个RVA。</p>
 <p>双字最高位为1，表示导入符号是一个名称。</p>
 <h4 id="Name1"><a href="#Name1" class="headerlink" title=".Name1"></a>.Name1</h4><p>是一个RVA，它指向该结构所对应的DLL文件的名称，而这个名称是以“\0”结尾的Ansi字符串。</p>
 <h4 id="FirstThunk"><a href="#FirstThunk" class="headerlink" title=".FirstThunk"></a>.FirstThunk</h4><p>指向IAT，作为桥二</p>
-<h3 id="双桥结构"><a href="#双桥结构" class="headerlink" title="双桥结构"></a>双桥结构</h3><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222182914669.png" alt="image-20211222182914669" style="zoom:50%;">
-
+<h3 id="双桥结构"><a href="#双桥结构" class="headerlink" title="双桥结构"></a>双桥结构</h3><p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021058926.png" alt="image-20220324021058926"></p>
 <p>桥一和桥二经过不同的数据结构的通路，最终会指向相同的“Hint/Name”结构（未断裂）</p>
 <p>下面是MessageBoxA对应的导入表结构</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222183109301.png" alt="image-20211222183109301"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021050542.png"></p>
 <p>可以看到桥一的数值是2054h，找到FOA等于654h，从文件的该位置开始取双字，直到取出的双字为“0”结束。这里在user32.dll中仅使用这一个函数</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222183214889.png" alt="image-20211222183214889"></p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222183714590.png" alt="image-20211222183714590"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021033855.png"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021041927.png"></p>
 <p>再次换算FOA为65Ch，找到IMAGE_IMPORT_BY_NAME的结构</p>
-<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222183249149.png" alt="image-20211222183249149"></p>
+<p><img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324021007951.png" alt="image-20220324021007951"></p>
 <p>这个结构就是桥一的最终目的地“Hint/Name”第一个字表示编号，第二个字表示名称</p>
 <p>每一个结构IMAGE_IMPORT_DESCRIPTOR（导入表描述符）都对应一个唯一的动态链接库文件，以及引用了该动态链接库的多个函数，每个函数的最终“值-名称”描述均可以沿着桥1或者桥2找到，这种导入表结构被称为双桥结构。</p>
 <p>我们也可以用桥二来寻找函数</p>
 <p>导入函数地址表（IAT）是一个双字的数组，每个双字代表的是一个导入函数的VA，该地址称为导入函数地址（Import Address，IA）。IAT中定义了不止一个链接库的函数，为了区分这些从不同链接库引入的函数，规定所有引入函数按照链接库分类；相同链接库的函数地址排列在一起，最后以一个双字的0结束。</p>
-<img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/Users/sanyi/AppData/Roaming/Typora/typora-user-images/image-20211222184120682.png" alt="image-20211222184120682" style="zoom:33%;">
+<img src="/2021/12/22/Windows/%E5%AF%BC%E5%85%A5%E8%A1%A8/image-20220324020950901.png" alt="image-20220324020950901" style="zoom:33%;">
 
 <p>在内存中，桥1可以让你找到调用的函数名称或函数的索引编号，桥2却可以帮助你找到该函数指令代码在内存空间的地址。</p>
 <p>当PE被加载进虚拟地址空间以后，IAT的内容会被操作系统更改为函数的VA。这个修改最终会导致通向“值-名称”描述的桥2发生断裂，这时我们就只能通过桥一来确认导入了那些函数。</p>
