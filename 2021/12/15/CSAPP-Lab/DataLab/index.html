@@ -59,9 +59,9 @@ bitXor(x,y)123int bitxor(int m,int n) &amp;#1,">
         </div>
         <div class="content markdown">
             <h1 id="Data-Lab"><a href="#Data-Lab" class="headerlink" title="Data Lab"></a>Data Lab</h1><p>用!  ̃ &amp; ˆ | + &lt;&lt; &gt;&gt;实现下列函数</p>
-<p><img src="/2021/12/15/CSAPP-Lab/DataLab/DataLab%5Cimage-20211220133136361.png" alt="image-20211220133136361"></p>
+<p><img src="/2021/12/15/CSAPP-Lab/DataLab/image-20211220133136361.png" alt="image-20211220133136361"></p>
 <p>中文的题干</p>
-<p><img src="/2021/12/15/CSAPP-Lab/DataLab/DataLab%5Cimage-20211220163157477.png" alt="image-20211220163157477"></p>
+<p><img src="/2021/12/15/CSAPP-Lab/DataLab/image-20211220163157477.png" alt="image-20211220163157477"></p>
 <h2 id="bitXor-x-y"><a href="#bitXor-x-y" class="headerlink" title="bitXor(x,y)"></a>bitXor(x,y)</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">bitxor</span><span class="params">(<span class="keyword">int</span> m,<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> ~(m &amp; n)&amp;~(~m &amp; ~n);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>本来没想明白，后来想从集合的角度看一下，发现^在集合表示中叫离散差。表示如下：</p>
